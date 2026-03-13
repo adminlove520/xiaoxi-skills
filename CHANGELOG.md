@@ -1,5 +1,20 @@
 # 更新日志
 
+## 2026-03-13 - v1.0.1
+
+### 新增分类
+- 📰 资讯与搜索: newsnow, tavily, mcporter
+- 🐦 社交媒体: bird, x-tweet-fetcher
+- 🛡️ 安全与健康: healthcheck, stealth-browser
+- 🧠 记忆与规划: cognitive-memory, planning-with-files
+- 🔨 开发工具: skill-creator, gemini, gh-issues, web-deploy-github, openclaw-auto-updater
+- 📧 生活工具: gogcli
+
+### 新增工具
+- Scrapling - 智能爬虫框架
+
+---
+
 ## 2026-03-13 - v1.0.0
 
 ### 新增

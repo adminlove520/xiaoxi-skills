@@ -1,6 +1,6 @@
 # 🦞 小溪的 Skills 收藏库
 
-> 小溪自用 + 推荐的高质量 Skills 整理
+> 小溪自用 + 推荐的高质量 Skills 整理 | 持续更新中
 
 ## 📦 目录
 
@@ -24,6 +24,34 @@
 ### 🔧 第三方强力工具
 - [MetaClaw](#metaclaw) - 持续学习进化
 - [OpenClaw Control Center](#openclaw-control-center) - 控制面板
+- [Scrapling](#scrapling) - 智能爬虫
+
+### 📰 资讯与搜索
+- [newsnow](#newsnow) - 聚合新闻源
+- [tavily](#tavily) - AI 搜索
+- [mcporter](#mcporter) - MCP 工具集
+
+### 🐦 社交媒体
+- [bird](#bird) - Twitter 发推
+- [x-tweet-fetcher](#x-tweet-fetcher) - 推文获取
+
+### 🛡️ 安全与健康
+- [healthcheck](#healthcheck) - 安全检查
+- [stealth-browser](#stealth-browser) - 隐身浏览器
+
+### 🧠 记忆与规划
+- [cognitive-memory](#cognitive-memory) - 认知记忆
+- [planning-with-files](#planning-with-files) - 文件规划
+
+### 🔨 开发工具
+- [skill-creator](#skill-creator) - 创建技能
+- [gemini](#gemini) - Gemini CLI
+- [gh-issues](#gh-issues) - GitHub Issues 管理
+- [web-deploy-github](#web-deploy-github) - GitHub Pages 部署
+- [openclaw-auto-updater](#openclaw-auto-updater) - 自动更新
+
+### 📧 生活工具
+- [gogcli](#gogcli) - Google 服务 CLI
 
 ---
 
@@ -164,7 +192,7 @@ npx clawdhub install readx
 
 ### agent-reach
 
-**功能**: 让 AI 能访问全网 12+ 平台（Twitter、Reddit、YouTube、B站、小红书等）。
+**功能**: 让 AI 能访问全网 12+ 平台（Twitter、Reddit、YouTube，B站、小红书等）。
 
 **触发词**:
 - "帮我配"
@@ -307,15 +335,61 @@ npm run dev:ui
 
 ---
 
-## 🛠️ 其他有用 Skills
+### Scrapling
 
-### gogcli
+**功能**: 智能爬虫框架，反机器人检测、自适应抓取、MCP 支持。
 
-**功能**: Google 服务 CLI（Gmail/Calendar/Drive/Tasks）。
+**GitHub**: https://github.com/D4Vinci/Scrapling
 
-**安装**: 本地已有 `C:\Users\whoami\.openclaw\skills\gogcli_0.11.0_windows_amd64`
+**安装**:
+```bash
+pip install scrapling
+pip install "scrapling[fetchers]"  # 带浏览器支持
+```
 
-**配置**: OAuth 已完成
+**特点**:
+- 🕷️ 并发、多 Session、暂停/恢复
+- 🛡️ 反 Cloudflare 绕过
+- 🔄 自适应抓取
+- 🤖 MCP 服务器支持
+- ⚡ 比普通爬虫快 10-41 倍
+
+---
+
+## 📰 资讯与搜索
+
+### newsnow
+
+**功能**: CLI 聚合新闻源，66 个来源覆盖 44 平台。
+
+**触发词**:
+- "新闻"
+- "热点"
+- " trending"
+
+**安装**:
+```bash
+npm install newsnow -g
+```
+
+**使用**:
+```bash
+newsnow --source twitter --limit 10
+newsnow --source reddit --keyword AI
+```
+
+---
+
+### tavily
+
+**功能**: AI 优化的 Web 搜索，适合研究、新闻查询。
+
+**安装**:
+```bash
+npx clawdhub install tavily
+```
+
+**ClawHub**: tavily
 
 ---
 
@@ -329,6 +403,212 @@ npm run dev:ui
 
 ---
 
+## 🐦 社交媒体
+
+### bird
+
+**功能**: Twitter/X 发推和搜索。
+
+**安装**:
+```bash
+npx clawdhub install bird
+```
+
+**配置**: 需要 AUTH_TOKEN 和 CT0
+
+**注意**: 详见 TOOLS.md
+
+---
+
+### x-tweet-fetcher
+
+**功能**: 无需登录获取 Twitter 推文，支持普通推文、长推文、引用的推文。
+
+**安装**:
+```bash
+npx clawdhub install x-tweet-fetcher
+```
+
+**ClawHub**: x-tweet-fetcher
+
+---
+
+## 🛡️ 安全与健康
+
+### healthcheck
+
+**功能**: 主机安全加固检查，防火墙/SSH/更新硬化、风险容忍度配置。
+
+**触发词**:
+- "安全审计"
+- "检查防火墙"
+- "硬化"
+
+**安装**:
+```bash
+npx clawdhub install healthcheck
+```
+
+**ClawHub**: healthcheck
+
+---
+
+### stealth-browser
+
+**功能**: 终极隐身浏览器自动化，反检测、Cloudflare 绕过、验证码解决。
+
+**触发词**:
+- "bypass cloudflare"
+- "solved captcha"
+- "stealth browse"
+
+**安装**:
+```bash
+npx clawdhub install stealth-browser
+```
+
+**ClawHub**: stealth-browser
+
+---
+
+## 🧠 记忆与规划
+
+### cognitive-memory
+
+**功能**: 智能多存储记忆系统，类人编码、整合、消亡和召回。
+
+**安装**:
+```bash
+npx clawdhub install cognitive-memory
+```
+
+**功能**:
+- 情景记忆 + 语义记忆 + 程序记忆 + 核心记忆
+- 多 Agent 共享
+- 哲学元反思
+- 支持 MEMORY.md、episode logging、知识图谱
+
+**ClawHub**: cognitive-memory
+
+---
+
+### planning-with-files
+
+**功能**: Manus 风格的文件规划，创建 task_plan.md、findings.md、progress.md。
+
+**安装**:
+```bash
+npx clawdhub install planning-with-files
+```
+
+**触发词**: 大型多步骤任务、研究项目
+
+**ClawHub**: planning-with-files
+
+---
+
+## 🔨 开发工具
+
+### skill-creator
+
+**功能**: 创建有效 Skills 的指南，用于构建自定义 Skills。
+
+**触发词**:
+- "创建 skill"
+- "做个新技能"
+
+**安装**:
+```bash
+npx clawdhub install skill-creator
+```
+
+**ClawHub**: skill-creator
+
+---
+
+### gemini
+
+**功能**: Gemini CLI 用于一次性 Q&A、总结、生成。
+
+**安装**:
+```bash
+npx clawdhub install gemini
+```
+
+**ClawHub**: gemini
+
+---
+
+### gh-issues
+
+**功能**: 获取 GitHub Issues，生成子 Agent 修复并开 PR，监控 PR 评论。
+
+**使用**:
+```bash
+gh-issues --owner repo --label bug
+gh-issues --milestone v1.0
+gh-issues --notify-channel -1002381931352
+```
+
+**安装**:
+```bash
+npx clawdhub install gh-issues
+```
+
+**ClawHub**: gh-issues
+
+---
+
+### web-deploy-github
+
+**功能**: 创建并部署单页静态网站到 GitHub Pages。
+
+**触发词**:
+- "部署网站"
+- "建博客"
+
+**安装**:
+```bash
+npx clawdhub install web-deploy-github
+```
+
+**ClawHub**: web-deploy-github
+
+---
+
+### openclaw-auto-updater
+
+**功能**: 计划自动 OpenClaw 和 Skills 更新。
+
+**安装**:
+```bash
+npx clawdhub install openclaw-auto-updater
+```
+
+**ClawHub**: openclaw-auto-updater
+
+---
+
+## 📧 生活工具
+
+### gogcli
+
+**功能**: Google 服务 CLI（Gmail/Calendar/Drive/Tasks/Docs/Sheets）。
+
+**本地路径**: `C:\Users\whoami\.openclaw\skills\gogcli_0.11.0_windows_amd64`
+
+**配置**: OAuth 已完成
+
+**使用**:
+```bash
+gog gmail search "in:inbox"
+gog calendar events list
+gog gmail send --to "xxx@email.com" --subject "主题" --body "内容"
+```
+
+---
+
 ## 📝 更新日志
 
 - 2026-03-13: 创建 xiaoxi-skills 仓库，整理所有 Skills
+- 2026-03-13: 新增资讯搜索、社交媒体、安全健康、记忆规划、开发工具分类
