@@ -1,0 +1,12 @@
+# Ignore embedded git repositories
+avatar-helper/.git
+clawbridge/.git
+clawfeed/.git
+cross-bot-communication/.git
+epro-memory/.git
+gogcli/.git
+lobster-cultivation/.git
+openclaw-qa/.git
+pinchtab-helper/.git
+self-driven/.git
+self-improving-agent/.git

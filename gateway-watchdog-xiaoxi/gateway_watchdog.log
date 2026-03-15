@@ -1,0 +1,110 @@
+[2026-03-03 18:41:39] 启动 Gateway Watchdog...
+[2026-03-03 18:41:39] ==================================================
+[2026-03-03 18:41:39] Gateway Watchdog 启动 (Windows)
+[2026-03-03 18:41:39] 检查间隔: 10s, 失败阈值: 2
+[2026-03-03 18:41:39] ==================================================
+[2026-03-04 08:21:23] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:21:23] Gateway 检查失败 (1/2)
+[2026-03-04 08:21:38] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 08:42:37] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:42:37] Gateway 检查失败 (1/2)
+[2026-03-04 08:44:37] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:44:37] Gateway 检查失败 (2/2)
+[2026-03-04 08:44:37] Gateway 连续失败，准备重启...
+[2026-03-04 08:44:46] Gateway 重启命令已发送
+[2026-03-04 08:45:57] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:45:57] Gateway 检查失败 (1/2)
+[2026-03-04 08:46:50] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:46:50] Gateway 检查失败 (2/2)
+[2026-03-04 08:46:50] Gateway 连续失败，准备重启...
+[2026-03-04 08:46:59] Gateway 重启命令已发送
+[2026-03-04 08:48:06] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:48:06] Gateway 检查失败 (1/2)
+[2026-03-04 08:48:24] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 08:50:34] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:50:34] Gateway 检查失败 (1/2)
+[2026-03-04 08:52:54] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:52:54] Gateway 检查失败 (2/2)
+[2026-03-04 08:52:54] Gateway 连续失败，准备重启...
+[2026-03-04 08:54:17] 重启失败: Command '['openclaw', 'gateway', 'restart']' timed out after 60 seconds
+[2026-03-04 08:55:30] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:55:30] Gateway 检查失败 (1/2)
+[2026-03-04 08:56:26] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:56:26] Gateway 检查失败 (2/2)
+[2026-03-04 08:56:26] Gateway 连续失败，准备重启...
+[2026-03-04 08:56:34] Gateway 重启命令已发送
+[2026-03-04 08:58:15] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 08:58:15] Gateway 检查失败 (1/2)
+[2026-03-04 08:58:29] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 09:34:55] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 09:34:55] Gateway 检查失败 (1/2)
+[2026-03-04 09:35:31] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 09:35:31] Gateway 检查失败 (2/2)
+[2026-03-04 09:35:31] Gateway 连续失败，准备重启...
+[2026-03-04 09:35:35] Gateway 重启命令已发送
+[2026-03-04 09:50:32] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 09:50:32] Gateway 检查失败 (1/2)
+[2026-03-04 09:51:42] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 09:51:42] Gateway 检查失败 (2/2)
+[2026-03-04 09:51:42] Gateway 连续失败，准备重启...
+[2026-03-04 09:52:19] Gateway 重启命令已发送
+[2026-03-04 09:53:28] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 09:53:28] Gateway 检查失败 (1/2)
+[2026-03-04 09:53:51] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 09:56:53] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 09:56:53] Gateway 检查失败 (1/2)
+[2026-03-04 09:57:07] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 10:03:17] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 10:03:17] Gateway 检查失败 (1/2)
+[2026-03-04 10:04:20] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 10:04:20] Gateway 检查失败 (2/2)
+[2026-03-04 10:04:20] Gateway 连续失败，准备重启...
+[2026-03-04 10:07:10] 重启失败: Command '['openclaw', 'gateway', 'restart']' timed out after 60 seconds
+[2026-03-04 10:07:46] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 10:07:46] Gateway 检查失败 (1/2)
+[2026-03-04 10:08:01] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 10:10:47] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 10:10:48] Gateway 检查失败 (1/2)
+[2026-03-04 10:11:46] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 10:11:46] Gateway 检查失败 (2/2)
+[2026-03-04 10:11:46] Gateway 连续失败，准备重启...
+[2026-03-04 10:13:11] 重启失败: Command '['openclaw', 'gateway', 'restart']' timed out after 60 seconds
+[2026-03-04 10:14:01] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 10:14:01] Gateway 检查失败 (1/2)
+[2026-03-04 10:14:16] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 10:27:32] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 10:27:32] Gateway 检查失败 (1/2)
+[2026-03-04 10:27:54] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 11:06:44] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 11:06:44] Gateway 检查失败 (1/2)
+[2026-03-04 11:07:31] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 11:07:31] Gateway 检查失败 (2/2)
+[2026-03-04 11:07:31] Gateway 连续失败，准备重启...
+[2026-03-04 11:08:59] 重启失败: Command '['openclaw', 'gateway', 'restart']' timed out after 60 seconds
+[2026-03-04 11:09:53] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 11:09:53] Gateway 检查失败 (1/2)
+[2026-03-04 11:10:16] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 11:59:11] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 11:59:11] Gateway 检查失败 (1/2)
+[2026-03-04 12:00:15] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 12:00:15] Gateway 检查失败 (2/2)
+[2026-03-04 12:00:15] Gateway 连续失败，准备重启...
+[2026-03-04 12:02:30] 重启失败: Command '['openclaw', 'gateway', 'restart']' timed out after 60 seconds
+[2026-03-04 12:03:31] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 12:03:31] Gateway 检查失败 (1/2)
+[2026-03-04 12:03:55] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 12:04:21] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 12:04:21] Gateway 检查失败 (1/2)
+[2026-03-04 12:04:47] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 12:04:47] Gateway 检查失败 (2/2)
+[2026-03-04 12:04:47] Gateway 连续失败，准备重启...
+[2026-03-04 12:05:22] Gateway 重启命令已发送
+[2026-03-04 12:06:10] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 12:06:10] Gateway 检查失败 (1/2)
+[2026-03-04 12:06:32] Gateway 恢复正常 (之前连续失败 1 次)
+[2026-03-04 12:24:29] 检查失败: Command '['openclaw', 'gateway', 'status']' timed out after 15 seconds
+[2026-03-04 12:24:29] Gateway 检查失败 (1/2)
+[2026-03-04 12:24:39] Gateway 检查失败 (2/2)
+[2026-03-04 12:24:39] Gateway 连续失败，准备重启...
+[2026-03-04 12:24:39] Gateway 重启命令已发送
+[2026-03-04 12:24:49] Gateway 检查失败 (1/2)
