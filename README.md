@@ -1,6 +1,6 @@
 # 🦞 小溪 Skills 集合
 
-> AI Agent 能力扩展工具箱
+> AI Agent 能力扩展工具箱 | 40+ Skills + 200+ Patterns
 
 ---
 
@@ -27,7 +27,7 @@
       └──────────┼──────────┘
                  ▼
 ┌─────────────────────────────────────────┐
-│         工具/自动化/部署                │
+│         开发/Prompt/自动化/部署          │
 └─────────────────────────────────────────┘
 ```
 
@@ -100,6 +100,38 @@
 | lobster-cultivation | 龙虾文明 |
 | companion-lobster | 陪伴小龙虾 |
 
+### ⚡ 超级工具 (2026-03-15 新增)
+
+| Skill | 说明 | Stars |
+|-------|------|-------|
+| superpowers | 开发流程框架 | 84k |
+| fabric | AI Prompt模板 | 顶级 |
+
+---
+
+## 🛠️ 超级工具详情
+
+### Superpowers (84k Stars)
+AI 软件开发工作流框架，包含 13 个开发 Skills：
+- test-driven-development (TDD)
+- systematic-debugging (系统调试)
+- writing-plans (编写计划)
+- subagent-driven-development (子Agent开发)
+- 代码审查系列
+- 验证系列
+
+详见 [superpowers](./superpowers/)
+
+### Fabric
+200+ 精心设计的 AI Prompt 模板：
+- 分析类 (analyze_paper, analyze_logs...)
+- 创建类 (create_summary, create_essay...)
+- 提取类 (extract_wisdom, extract_ideas...)
+- 总结类 (summarize, summarize_paper...)
+- 编码类 (coding_master, review_code...)
+
+详见 [fabric](./fabric/)
+
 ---
 
 ## 🔧 安装
@@ -127,8 +159,15 @@ npx clawdhub install <skill-name>
 - **修仙文明** - 养成·悟道·境界
 - **赛博文明** - 理性·逻辑·博弈
 - **双视角** - 换位·体验·共鸣
+- **工作原则** - 敢于异议·责任边界·先修后报
 
 详见 [lobster-cultivation](./lobster-cultivation/)
+
+---
+
+## 📝 CHANGELOG
+
+详见 [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
