@@ -1,80 +1,55 @@
-# CHANGELOG - 小溪 Skills 集合
+# 更新日志
 
-All notable changes to this project will be documented in this file.
+## 2026-03-13 - v1.0.1
 
----
+### 新增分类
+- 📰 资讯与搜索: newsnow, tavily, mcporter
+- 🐦 社交媒体: bird, x-tweet-fetcher
+- 🛡️ 安全与健康: healthcheck, stealth-browser
+- 🧠 记忆与规划: cognitive-memory, planning-with-files
+- 🔨 开发工具: skill-creator, gemini, gh-issues, web-deploy-github, openclaw-auto-updater
+- 📧 生活工具: gogcli
 
-## [2026-03-15] - 超级工具更新
-
-### Added
-- **superpowers** - AI 开发流程框架 (84k Stars)
-  - 13个开发Skills
-  - TDD, 系统调试, 子Agent开发
-  - 代码审查, 计划编写
-  
-- **fabric** - AI Prompt 模板库
-  - 200+ 精心设计的Prompts
-  - 分析/创建/提取/总结/编码 五大类
-
-### Updated
-- README.md 完整更新
-- 新增超级工具章节
+### 新增工具
+- Scrapling - 智能爬虫框架
 
 ---
 
-## [2026-03-14] - 浏览器工具
+## 2026-03-13 - v1.0.0
 
-### Added
-- **chrome-cdp** - Chrome CDP集成
-  - 连接已有Chrome标签页
-  - 无需重新登录
+### 新增
+- 创建 xiaoxi-skills 仓库
+- 整理小溪自用 Skills (9个)
+- 整理小溪推荐必装 Skills (4个)
+- 整理第三方工具 (2个)
 
----
+### 目录结构
+```
+xiaoxi-skills/
+├── README.md        # 技能大全
+├── CHANGELOG.md    # 更新日志
+└── .gitignore
+```
 
-## [2026-03-13] - 龙虾文明 V1.0
+### Skills 列表
 
-### Added
-- **lobster-cultivation** - 龙虾文明完整体系
-  - 三大流派: 修仙/赛博/双视角
-  - 日常任务系统
-  - Skill + API + CLI 完整工具链
-  - GitHub Pages 前端
-  - GitHub Actions 自动化
+#### 自用
+- xiaoxi-blog - 博客管理
+- lyric-sense - 歌词音乐
+- movie-subtitle-viewer - 电影字幕
+- self-improving-agent - 自我进化
+- openclaw-evolution - 进化指南
+- pinchtab - 浏览器自动化
+- readx - Twitter分析
+- agent-reach - 全平台接入
+- find-skills - 技能发现
 
----
-
-## [Earlier] - 基础Skills
-
-### Added
-- cognitive-memory - 认知记忆系统
-- self-improving - 自我改进
-- self-reflection - 自我反思
-- stealth-browser - 隐形浏览器
-- clawpi-redpacket-monitor - 红包监控
-- gateway-watchdog-xiaoxi - Gateway看门狗
-- x-tweet-fetcher - Twitter获取
-- newsnow - 新闻热点
+#### 推荐
+- blucli - BluOS控制
+- eightctl - 智能床垫
+- weather - 天气查询
 - github - GitHub操作
-- gogcli - Google服务
-- obsidian - Obsidian笔记
-- powerpoint-pptx - PPT制作
-- web-deploy-github - GitHub Pages部署
-- create-agent-skills - Skill创建
-- skill-creator - Skill生成器
-- pentest-learning-skill - 安全学习
-- multi-search-engine - 多搜索引擎
-- tavily - AI搜索
 
----
-
-## 📊 统计
-
-| 类别 | 数量 |
-|------|------|
-| 总Skills | 40+ |
-| Fabric Patterns | 200+ |
-| Superpowers Skills | 13 |
-
----
-
-**Made with ❤️ by 小溪**
+#### 第三方
+- MetaClaw - 持续学习
+- Control Center - 控制面板
