@@ -13,6 +13,13 @@ const SOURCE_COLORS = {
   skillssh: { bg: '#f6c90e20', color: '#f6c90e', label: 'skill.sh' }
 };
 
+// Leaderboard 子Tab配置
+const LEADERBOARD_TABS = [
+  { key: 'trending', label: '🔥 综合趋势', color: '#667eea' },
+  { key: 'github', label: '★ GitHub Top10', color: '#48bb78' },
+  { key: 'clawhub', label: '⚡ ClawHub 推荐', color: '#ed8936' }
+];
+
 export default function Home() {
   const [tab, setTab] = useState('browse');
   const [skills, setSkills] = useState([]);
@@ -29,11 +36,23 @@ export default function Home() {
   const [discovering, setDiscovering] = useState(false);
   const [discoverError, setDiscoverError] = useState(null);
   
-  // Leaderboard state
-  const [leaderboard, setLeaderboard] = useState({ clawhub: [], github: [], trending: [] });
+  // Leaderboard state - 改为每 Tab 独立加载状态
+  const [leaderboard, setLeaderboard] = useState({
+    trending: [],
+    github: [],
+    clawhub: []
+  });
   const [leaderboardTab, setLeaderboardTab] = useState('trending');
-  const [loadingBoard, setLoadingBoard] = useState(false);
-  const [boardError, setBoardError] = useState(null);
+  const [leaderboardLoading, setLeaderboardLoading] = useState({
+    trending: false,
+    github: false,
+    clawhub: false
+  });
+  const [leaderboardError, setLeaderboardError] = useState({
+    trending: null,
+    github: null,
+    clawhub: null
+  });
   const [boardNote, setBoardNote] = useState(null);
 
   // Fetch skills on mount
@@ -90,45 +109,48 @@ export default function Home() {
     }
   };
 
-  // Load all leaderboard data once when entering tab
+  // 按需加载单个 leaderboard 数据源
+  const fetchLeaderboardSource = useCallback(async (source) => {
+    // 如果已有数据，不重复加载
+    if (leaderboard[source].length > 0) {
+      return;
+    }
+
+    // 设置该 source 的加载状态
+    setLeaderboardLoading(prev => ({ ...prev, [source]: true }));
+    setLeaderboardError(prev => ({ ...prev, [source]: null }));
+
+    try {
+      const res = await fetch(`${API_BASE}/leaderboard?source=${source}`, { 
+        signal: AbortSignal.timeout(15000) 
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setLeaderboard(prev => ({
+          ...prev,
+          [source]: data.rankings || []
+        }));
+        if (data.note) setBoardNote(data.note);
+      } else {
+        setLeaderboardError(prev => ({ ...prev, [source]: data.error || '加载失败' }));
+      }
+    } catch (e) {
+      const errorMsg = e.name === 'TimeoutError' ? '请求超时' : e.message;
+      setLeaderboardError(prev => ({ ...prev, [source]: errorMsg }));
+    } finally {
+      setLeaderboardLoading(prev => ({ ...prev, [source]: false }));
+    }
+  }, [leaderboard]);
+
+  // 当 Tab 切换到 leaderboard 时，加载当前选中的数据源
   useEffect(() => {
     if (tab === 'leaderboard') {
-      // Load all three at once
-      const sources = ['trending', 'github', 'clawhub'];
-      Promise.all(
-        sources.map(async (src) => {
-          try {
-            const res = await fetch(`${API_BASE}/leaderboard?source=${src}`, { 
-              signal: AbortSignal.timeout(15000) 
-            });
-            const data = await res.json();
-            if (data.success) {
-              return { source: src, rankings: data.rankings || [], note: data.note };
-            }
-          } catch (e) {
-            console.warn(`Failed to load ${src}:`, e.message);
-          }
-          return { source: src, rankings: [], note: null };
-        })
-      ).then(results => {
-        setLoadingBoard(false);
-        const newBoard = {};
-        let note = null;
-        results.forEach(r => {
-          newBoard[r.source] = r.rankings;
-          if (r.note) note = r.note;
-        });
-        setLeaderboard(newBoard);
-        if (note) setBoardNote(note);
-        if (newBoard.trending.length === 0 && newBoard.github.length === 0) {
-          setBoardError('加载失败，请刷新重试');
-        }
-      });
+      fetchLeaderboardSource(leaderboardTab);
     }
-  }, [tab]);
+  }, [tab, leaderboardTab, fetchLeaderboardSource]);
 
   const getInstallCmd = (skill) => {
-    // 根据 source 决定正确的安装命令
     if (skill.source === 'workspace') {
       return `cp -r ~/.openclaw/workspace/skills/${skill.name} ~/.openclaw/skills/`;
     }
@@ -148,7 +170,6 @@ export default function Home() {
       }
       return `clawdhub install ${skill.name}`;
     }
-    // fallback
     return `clawdhub install ${skill.name}`;
   };
 
@@ -158,7 +179,6 @@ export default function Home() {
     });
   };
 
-  // Filter skills for browse tab
   const filteredSkills = skills.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
                        (s.desc && s.desc.toLowerCase().includes(search.toLowerCase()));
@@ -185,7 +205,6 @@ export default function Home() {
     return <span style={{ color: '#667eea' }}>⚡ {typeof score === 'number' ? score.toFixed(2) : score}</span>;
   };
 
-  // Stats for browse tab
   const stats = [
     { key: 'all', label: '全部', color: '#667eea', count: skills.length },
     { key: 'workspace', label: 'Workspace', color: '#48bb78', count: skills.filter(s => s.source === 'workspace').length },
@@ -236,7 +255,6 @@ export default function Home() {
       {/* ==================== BROWSE TAB ==================== */}
       {tab === 'browse' && (
         <>
-          {/* Search & Filter */}
           <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <input
               type="text"
@@ -253,7 +271,6 @@ export default function Home() {
             </select>
           </div>
 
-          {/* Stats Bar */}
           {!loading && !error && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', padding: '0 24px 24px', flexWrap: 'wrap' }}>
               {stats.map(s => (
@@ -277,7 +294,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Loading */}
           {loading && (
             <div style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🦞</div>
@@ -285,7 +301,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Error */}
           {error && (
             <div style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {error}</div>
@@ -295,7 +310,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Skills Grid */}
           {!loading && !error && (
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
               {filteredSkills.length > 0 ? filteredSkills.map((skill) => (
@@ -334,7 +348,6 @@ export default function Home() {
       {/* ==================== DISCOVER TAB ==================== */}
       {tab === 'discover' && (
         <>
-          {/* Search Form */}
           <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px 24px' }}>
             <form onSubmit={handleDiscover} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <input
@@ -360,7 +373,6 @@ export default function Home() {
             </form>
           </div>
 
-          {/* Discover Results */}
           {discovering && (
             <div style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
@@ -422,19 +434,15 @@ export default function Home() {
       {/* ==================== LEADERBOARD TAB ==================== */}
       {tab === 'leaderboard' && (
         <>
-          {/* Leaderboard Tabs */}
+          {/* Leaderboard Sub-Tabs */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '0 24px 24px' }}>
-            {[
-              { key: 'trending', label: '🔥 综合趋势' },
-              { key: 'github', label: '★ GitHub Top10' },
-              { key: 'clawhub', label: '⚡ ClawHub 推荐' }
-            ].map(t => (
+            {LEADERBOARD_TABS.map(t => (
               <button
                 key={t.key}
                 onClick={() => setLeaderboardTab(t.key)}
                 style={{
                   padding: '10px 20px',
-                  background: leaderboardTab === t.key ? '#667eea' : 'transparent',
+                  background: leaderboardTab === t.key ? t.color : 'transparent',
                   border: leaderboardTab === t.key ? 'none' : '1px solid #2d2d4a',
                   borderRadius: '6px',
                   color: '#fff',
@@ -447,30 +455,32 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Note */}
           {boardNote && (
             <div style={{ textAlign: 'center', padding: '0 24px 16px', color: '#888', fontSize: '12px' }}>
               ℹ️ {boardNote}
             </div>
           )}
 
-          {loadingBoard && (
+          {/* Loading State - 只显示当前 Tab 的加载状态 */}
+          {leaderboardLoading[leaderboardTab] && (
             <div style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
-              <div style={{ color: '#888' }}>加载排行榜...</div>
+              <div style={{ color: '#888' }}>加载{LEADERBOARD_TABS.find(t => t.key === leaderboardTab)?.label}...</div>
             </div>
           )}
 
-          {boardError && !loadingBoard && (
+          {/* Error State - 只显示当前 Tab 的错误 */}
+          {leaderboardError[leaderboardTab] && !leaderboardLoading[leaderboardTab] && (
             <div style={{ textAlign: 'center', padding: '24px' }}>
-              <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {boardError}</div>
-              <button onClick={() => window.location.reload()} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
+              <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {leaderboardError[leaderboardTab]}</div>
+              <button onClick={() => fetchLeaderboardSource(leaderboardTab)} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
                 🔄 重试
               </button>
             </div>
           )}
 
-          {!loadingBoard && !boardError && leaderboard[leaderboardTab]?.length > 0 && (
+          {/* Data Display - 只显示当前 Tab 的数据 */}
+          {!leaderboardLoading[leaderboardTab] && !leaderboardError[leaderboardTab] && leaderboard[leaderboardTab]?.length > 0 && (
             <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px 48px' }}>
               {leaderboard[leaderboardTab].map((skill, i) => (
                 <div 
@@ -524,7 +534,8 @@ export default function Home() {
             </div>
           )}
 
-          {!loadingBoard && !boardError && leaderboard[leaderboardTab]?.length === 0 && (
+          {/* Empty State - 只显示当前 Tab 的空状态 */}
+          {!leaderboardLoading[leaderboardTab] && !leaderboardError[leaderboardTab] && leaderboard[leaderboardTab]?.length === 0 && (
             <div style={{ textAlign: 'center', padding: '48px', color: '#666' }}>
               暂无数据
             </div>
