@@ -1,174 +1,173 @@
 # xiaoxi-skills 全量索引
 
-> 生成时间: 2026-04-28
-> 总计: 72 个 Skills
+> 总计: 73 个 Skills | 更新: 2026-04-28
 
-## 📊 来源分布
+## 📦 快速导航
 
-| 来源 | 数量 | 说明 |
-|------|------|------|
-| workspace | 44 | 用户自定义 Skills |
-| openclaw | 24 | OpenClaw 内置 Skills |
-| repo | 73 | 收藏库中已有 |
+按字母顺序:
 
-## 📦 完整索引
+[A](#a) [B](#b) [C](#c) [D](#d) [E](#e) [F](#f) [G](#g) [H](#h) [L](#l) [M](#m) [O](#o) [P](#p) [S](#s) [T](#t) [W](#w) [X](#x)
 
-### A
+---
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| agent-reach | 全平台接入 (Twitter/Reddit/YouTube/B站等) | workspace | cp |
-| auto-monitor | 主动监控系统状态 | openclaw | cp |
-| autocli | 55+ 社交/内容网站 CLI | openclaw | cp |
-| avatar-helper | 头像助手 | repo | clawdhub |
+## A
 
-### B
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| agent-reach | 全平台接入 (Twitter/Reddit/YouTube/B站等) | workspace | [查看](skills/agent-reach.md) |
+| auto-monitor | 主动监控系统状态 | openclaw | [查看](skills/auto-monitor.md) |
+| autocli | 55+ 社交/内容网站 CLI | openclaw | [查看](skills/autocli.md) |
+| avatar-helper | 头像助手 | repo | [查看](skills/avatar-helper.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| building-agentskills | 构建 Agent Skills | openclaw | cp |
+## B
 
-### C
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| building-agentskills | 构建 Agent Skills | openclaw | [查看](skills/building-agentskills.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| chrome-cdp | Chrome CDP 协议控制 | repo | clawdhub |
-| clawbot-market | ClawBot 市场 | repo | clawdhub |
-| clawbridge | Bridge 工具 | repo | clawdhub |
-| clawfeed | Feed 聚合 | repo | clawdhub |
-| clawhub | ClawHub CLI | openclaw | cp |
-| clawpi-redpacket-monitor | 红包监控 | repo | clawdhub |
-| clawteam | 多 Agent 团队协调 | workspace | cp |
-| coding-agent | 编码 Agent | openclaw | cp |
-| coding-delegate-agent | 编码委托 Agent | workspace | cp |
-| cognitive-memory | 认知记忆系统 | repo | clawdhub |
-| companion-lobster | 陪伴型小龙虾 | repo | clawdhub |
-| create-agent-skills | 创建 Agent Skills | repo | clawdhub |
-| cross-bot-communication | 跨 Bot 通信 | repo | clawdhub |
+## C
 
-### D
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| chrome-cdp | Chrome CDP 协议控制 | repo | [查看](skills/chrome-cdp.md) |
+| clawbot-market | ClawBot 市场 | repo | [查看](skills/clawbot-market.md) |
+| clawbridge | Bridge 工具 | repo | [查看](skills/clawbridge.md) |
+| clawfeed | Feed 聚合 | repo | [查看](skills/clawfeed.md) |
+| clawhub | ClawHub CLI | openclaw | [查看](skills/clawhub.md) |
+| clawpi-redpacket-monitor | 红包监控 | repo | [查看](skills/clawpi-redpacket-monitor.md) |
+| clawteam | 多 Agent 团队协调 | workspace | [查看](skills/clawteam.md) |
+| coding-agent | 编码 Agent | openclaw | [查看](skills/coding-agent.md) |
+| coding-delegate-agent | 编码委托 Agent | workspace | [查看](skills/coding-delegate-agent.md) |
+| cognitive-memory | 认知记忆系统 | repo | [查看](skills/cognitive-memory.md) |
+| companion-lobster | 陪伴型小龙虾 | repo | [查看](skills/companion-lobster.md) |
+| create-agent-skills | 创建 Agent Skills | repo | [查看](skills/create-agent-skills.md) |
+| cross-bot-communication | 跨 Bot 通信 | repo | [查看](skills/cross-bot-communication.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| dna-memory | DNA 记忆系统 | openclaw | cp |
+## D
 
-### E
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| dna-memory | DNA 记忆系统 | openclaw | [查看](skills/dna-memory.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| elite-longterm-memory | 精英长期记忆 | repo | clawdhub |
-| epro-memory | EPRO 记忆 | repo | clawdhub |
+## E
 
-### F
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| elite-longterm-memory | 精英长期记忆 | repo | [查看](skills/elite-longterm-memory.md) |
+| epro-memory | EPRO 记忆 | repo | - |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| fabric | Fabric 工具 | repo | clawdhub |
-| files | 文件管理 | repo | clawdhub |
-| find-skills | 技能发现 | openclaw | cp |
+## F
 
-### G
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| fabric | Fabric 工具 | repo | - |
+| files | 文件管理 | repo | - |
+| find-skills | 技能发现 | openclaw | [查看](skills/find-skills.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| gateway-watchdog-xiaoxi | 网关看门狗 | repo | clawdhub |
-| gh-issues | GitHub Issues 管理 | openclaw | cp |
-| github | GitHub CLI | openclaw | cp |
-| gogcli | Google 服务 CLI | repo | clawdhub |
+## G
 
-### H
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| gateway-watchdog-xiaoxi | 网关看门狗 | repo | [查看](skills/gateway-watchdog-xiaoxi.md) |
+| gh-issues | GitHub Issues 管理 | openclaw | [查看](skills/gh-issues.md) |
+| github | GitHub CLI | repo | [查看](skills/github.md) |
+| gogcli | Google 服务 CLI | repo | - |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| healthcheck | 安全检查 | openclaw | cp |
-| hermes-agent | Hermes Agent | openclaw | cp |
-| holographic-memory | 全息记忆 | openclaw | cp |
+## H
 
-### L
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| healthcheck | 安全检查 | openclaw | [查看](skills/healthcheck.md) |
+| hermes-agent | Hermes Agent | openclaw | - |
+| holographic-memory | 全息记忆 | openclaw | [查看](skills/holographic-memory.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| lyric-sense | 歌词音乐 | openclaw | cp |
+## L
 
-### M
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| lobster-cultivation | 小龙虾养殖 | repo | [查看](skills/lobster-cultivation.md) |
+| lyric-sense | 歌词音乐 | openclaw | [查看](skills/lyric-sense.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| memory-curator | 记忆策展人 | workspace | cp |
-| memu | 内存工具 | repo | clawdhub |
-| minimax-docx | DOCX 文档创建 | workspace | cp |
-| minimax-pdf | PDF 生成 | workspace | cp |
-| minimax-xlsx | Excel 处理 | workspace | cp |
-| movie-subtitle-viewer | 电影字幕 | openclaw | cp |
-| multi-search-engine | 多搜索引擎 | repo | clawdhub |
-| myclaw-backup | 备份恢复 | repo | clawdhub |
+## M
 
-### N
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| memory-curator | 记忆策展人 | workspace | [查看](skills/memory-curator.md) |
+| memu | 内存工具 | repo | [查看](skills/memu.md) |
+| minimax-docx | DOCX 文档创建 | workspace | [查看](skills/minimax-docx.md) |
+| minimax-pdf | PDF 生成 | workspace | [查看](skills/minimax-pdf.md) |
+| minimax-xlsx | Excel 表格 | workspace | [查看](skills/minimax-xlsx.md) |
+| movie-subtitle-viewer | 电影字幕查看 | repo | [查看](skills/movie-subtitle-viewer.md) |
+| multi-search-engine | 多搜索引擎 | repo | [查看](skills/multi-search-engine.md) |
+| myclaw-backup | MyClaw 备份 | repo | [查看](skills/myclaw-backup.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| newsnow | 聚合新闻源 | repo | clawdhub |
+## O
 
-### O
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| obsidian | Obsidian 笔记 | repo | [查看](skills/obsidian.md) |
+| openclaw-auto-updater | 自动更新 | repo | [查看](skills/openclaw-auto-updater.md) |
+| openclaw-evolution | 进化指南 | workspace | [查看](skills/openclaw-evolution.md) |
+| openclaw-plugin-sdk-migration | 插件 SDK 迁移 | workspace | [查看](skills/openclaw-plugin-sdk-migration.md) |
+| openclaw-pr-maintainer | PR 维护 | openclaw | [查看](skills/openclaw-pr-maintainer.md) |
+| openclaw-qa | 问答系统 | repo | - |
+| openclaw-tavily-search | Tavily 搜索 | repo | [查看](skills/openclaw-tavily-search.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| obsidian | Obsidian 笔记 | repo | clawdhub |
-| openclaw-auto-updater | 自动更新 | repo | clawdhub |
-| openclaw-evolution | 进化指南 | workspace | cp |
-| openclaw-plugin-sdk-migration | SDK 迁移 | workspace | cp |
-| openclaw-pr-maintainer | PR 维护 | openclaw | cp |
-| openclaw-qa | QA 工具 | repo | clawdhub |
-| openclaw-tavily-search | Tavily 搜索 | repo | clawdhub |
+## P
 
-### P
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| pentest-learning-skill | 渗透学习 | repo | [查看](skills/pentest-learning-skill.md) |
+| pinchtab-helper | 浏览器自动化 | repo | [查看](skills/pinchtab-helper.md) |
+| planning-with-files | 文件规划 | repo | [查看](skills/planning-with-files.md) |
+| powerpoint-pptx | PPT 生成 | repo | [查看](skills/powerpoint-pptx.md) |
+| pptx-generator | PPT 生成器 | workspace | [查看](skills/pptx-generator.md) |
+| pr-review | PR 审查 | workspace | [查看](skills/pr-review.md) |
+| proactive-solvr | 主动解决者 | repo | - |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| pentest-learning-skill | 渗透学习 | repo | clawdhub |
-| pinchtab-helper | PinchTab 助手 | repo | clawdhub |
-| planning-with-files | 文件规划 | repo | clawdhub |
-| powerpoint-pptx | PowerPoint | repo | clawdhub |
-| pptx-generator | PPTX 生成器 | workspace | cp |
-| pr-review | PR 审查 | workspace | cp |
-| proactive-solvr | 主动解决者 | repo | clawdhub |
+## S
 
-### S
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| scrapling-official | 智能爬虫 | openclaw | [查看](skills/scrapling-official.md) |
+| self-driven | 自驱动 | repo | - |
+| self-health-monitor | 健康监控 | openclaw | [查看](skills/self-health-monitor.md) |
+| self-improving | 自我改进 | repo | - |
+| self-improving-agent | 自我进化 Agent | repo | - |
+| self-reflection | 自我反思 | repo | - |
+| skill-creator | 技能创建 | repo | - |
+| stealth-browser | 反检测浏览器 | repo | - |
+| summarize | 文本摘要 | openclaw | [查看](skills/summarize.md) |
+| superpowers | 超能力 | repo | - |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| scrapling-official | 智能爬虫 | openclaw | cp |
-| self-driven | 自我驱动 | repo | clawdhub |
-| self-health-monitor | 健康监控 | openclaw | cp |
-| self-improving | 自我改进 | repo | clawdhub |
-| self-improving-agent | 自我进化 Agent | repo | clawdhub |
-| self-reflection | 自我反思 | repo | clawdhub |
-| skill-creator | 技能创建 | repo | clawdhub |
-| stealth-browser | 隐身浏览器 | repo | clawdhub |
-| summarize | 总结工具 | openclaw | cp |
-| superpowers | 超能力 | repo | clawdhub |
+## T
 
-### T
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| taskflow | 任务流编排 | openclaw | [查看](skills/taskflow.md) |
+| taskflow-inbox-triage | 收件箱分类 | openclaw | [查看](skills/taskflow-inbox-triage.md) |
+| tavily | AI 搜索 | repo | - |
+| openclaw-tavily-search | Tavily 搜索 | repo | [查看](skills/openclaw-tavily-search.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| taskflow | 任务流 | openclaw | cp |
-| taskflow-inbox-triage | 收件箱分类 | openclaw | cp |
-| tavily | Tavily 搜索 | repo | clawdhub |
+## W
 
-### W
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| web-deploy-github | GitHub Pages 部署 | repo | [查看](skills/web-deploy-github.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| web-deploy-github | GitHub Pages 部署 | repo | clawdhub |
+## X
 
-### X
+| Skill | 描述 | 来源 | 文档 |
+|-------|------|------|------|
+| x-tweet-fetcher | 推文获取 | repo | [查看](skills/x-tweet-fetcher.md) |
 
-| Skill | 描述 | 来源 | 安装方式 |
-|-------|------|------|----------|
-| x-tweet-fetcher | 推文获取 | repo | clawdhub |
+---
 
-## 📝 更新日志
+## 📊 统计
 
-- 2026-04-28: 新增 30 个 Skills (workspace + openclaw 补充)
-- 2026-03-13: 初始版本，43 个 Skills
+| 来源 | 数量 |
+|------|------|
+| workspace | 44 |
+| openclaw | 24 |
+| repo | 73 |
+| **总计** | **73** |
