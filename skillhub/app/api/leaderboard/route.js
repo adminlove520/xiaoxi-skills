@@ -26,46 +26,31 @@ export async function GET(request) {
       trending: []
     };
 
-    // 1. ClawHub Top 10
+    // 1. ClawHub Top 10 - 使用真实 trending API
     try {
-      const categories = ['twitter', 'github', 'memory', 'search', 'browser', 'web', 'code', 'productivity', 'video', 'social'];
-      const seen = new Set();
-      
-      for (const cat of categories) {
-        try {
-          const clawhubRes = await fetch(
-            `https://clawhub.ai/api/v1/search?q=${encodeURIComponent(cat)}&limit=5`,
-            { 
-              headers: clawhubHeaders,
-              next: { revalidate: 1800 }
-            }
-          );
-          
-          if (clawhubRes.ok) {
-            const data = await clawhubRes.json();
-            (data.results || []).forEach(skill => {
-              if (!seen.has(skill.slug)) {
-                seen.add(skill.slug);
-                rankings.clawhub.push({
-                  name: skill.slug,
-                  desc: skill.summary || skill.displayName || skill.slug,
-                  score: skill.score || 0,
-                  displayName: skill.displayName,
-                  category: cat,
-                  source: 'clawhub',
-                  install: 'clawdhub'
-                });
-              }
-            });
-          }
-        } catch (e) {
-          console.warn(`ClawHub search failed for ${cat}:`, e.message);
+      const clawhubRes = await fetch(
+        `https://clawhub.ai/api/v1/packages?sort=updated&limit=15`,
+        { 
+          headers: clawhubHeaders,
+          next: { revalidate: 1800 }
         }
-      }
+      );
       
-      rankings.clawhub = rankings.clawhub
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
+      if (clawhubRes.ok) {
+        const data = await clawhubRes.json();
+        (data.items || []).slice(0, 10).forEach((skill, i) => {
+          rankings.clawhub.push({
+            name: skill.name,
+            desc: skill.summary || skill.displayName || skill.name,
+            displayName: skill.displayName,
+            score: (10 - i) + 3.5, // 模拟相似度评分 (基于排名)
+            category: 'trending',
+            source: 'clawhub',
+            install: 'clawdhub',
+            updatedAt: skill.updatedAt
+          });
+        });
+      }
     } catch (e) {
       console.warn('ClawHub API error:', e.message);
     }
@@ -164,20 +149,21 @@ export async function GET(request) {
     const trendingMap = new Map();
     
     rankings.clawhub.forEach((skill, i) => {
-      trendingMap.set(skill.name, {
+      trendingMap.set(`clawhub:${skill.name}`, {
         ...skill,
         rank: i + 1,
-        trendingScore: (10 - i) * 10 + (skill.score || 0) * 15
+        trendingScore: (10 - i) * 10 + 3.5 * 15
       });
     });
     
     rankings.github.forEach((skill, i) => {
-      const existing = trendingMap.get(skill.name);
+      const key = `clawhub:${skill.name}`;
+      const existing = trendingMap.get(key);
       if (existing) {
         existing.trendingScore += (10 - i) * 3 + Math.log10((skill.stars || 0) + 1) * 5;
         existing.githubStars = skill.stars;
       } else {
-        trendingMap.set(skill.name, {
+        trendingMap.set(key, {
           ...skill,
           rank: i + 1,
           trendingScore: (10 - i) * 6 + Math.log10((skill.stars || 0) + 1) * 12
@@ -186,11 +172,12 @@ export async function GET(request) {
     });
     
     rankings.skillssh.forEach((skill, i) => {
-      const existing = trendingMap.get(skill.name);
+      const key = `clawhub:${skill.name}`;
+      const existing = trendingMap.get(key);
       if (existing) {
         existing.trendingScore += (10 - i) * 2 + Math.log10((skill.stars || 0) + 1) * 3;
       } else {
-        trendingMap.set(skill.name, {
+        trendingMap.set(key, {
           ...skill,
           rank: i + 1,
           trendingScore: (10 - i) * 5 + Math.log10((skill.stars || 0) + 1) * 10
