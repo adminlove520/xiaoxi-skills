@@ -170,25 +170,7 @@ const BUILTIN_SKILLS = [
 ];
 
 const PENDING_SKILLS = [
-  { name: 'superpowers', desc: '超能力' },
-  { name: 'fabric', desc: 'Fabric 工具' },
-  { name: 'pentest-learning-skill', desc: '渗透学习' },
-  { name: 'dna-memory', desc: 'DNA 记忆系统' },
-  { name: 'holographic-memory', desc: '全息记忆' },
-  { name: 'hermes-agent', desc: 'Hermes Agent' },
-  { name: 'self-improving-agent', desc: '自我进化 Agent' },
-  { name: 'self-health-monitor', desc: '健康监控' },
-  { name: 'pr-review', desc: 'PR 审查' },
-  { name: 'taskflow', desc: '任务流编排' },
-  { name: 'taskflow-inbox-triage', desc: '收件箱分类' },
-  { name: 'minimax-docx', desc: 'DOCX 文档创建' },
-  { name: 'minimax-pdf', desc: 'PDF 生成' },
-  { name: 'minimax-xlsx', desc: 'Excel 表格' },
-  { name: 'movie-subtitle-viewer', desc: '电影字幕查看' },
-  { name: 'openclaw-evolution', desc: '进化指南' },
-  { name: 'coding-delegate-agent', desc: '编码委托 Agent' },
-  { name: 'memory-curator', desc: '记忆策展人' },
-  { name: 'clawteam', desc: '多 Agent 团队协调' },
-  { name: 'agent-reach', desc: '全平台接入' },
-  { name: 'auto-monitor', desc: '主动监控' },
+  // 在仓库中只有 README.md，需要补充 SKILL.md
+  { name: 'superpowers', desc: '超能力 - 84,751 Stars 的 AI 开发技能框架' },
+  { name: 'fabric', desc: 'Fabric - 200+ 精心设计的 AI Prompt 模板' },
 ];
