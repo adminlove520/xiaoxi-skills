@@ -1,5 +1,5 @@
 // Discover API - 多渠道搜索 Skills
-// 支持: clawhub (CLI), github, skill.sh
+// 支持: clawhub (真实API), github, skill.sh
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -12,59 +12,48 @@ export async function GET(request) {
 
   // Vercel 环境变量
   const GH_TOKEN = process.env.GITHUB_TOKEN;
+  const CLAWHUB_TOKEN = process.env.CLAWHUB_TOKEN || 'clh_8ZsZYX4obpZZykBv6QCh11zxCgp1eE2ywMmohmoMUkE';
+
   const ghHeaders = {
     'Accept': 'application/vnd.github.v3+json',
     ...(GH_TOKEN && { 'Authorization': `Bearer ${GH_TOKEN}` })
   };
 
+  const clawhubHeaders = {
+    'Accept': 'application/json',
+    'Authorization': `Bearer ${CLAWHUB_TOKEN}`
+  };
+
   try {
     const results = [];
 
-    // 1. ClawHub 搜索 - 使用 clawhub search 命令输出
-    // Vercel Serverless 无法执行外部命令，改用 clawhub.com API
+    // 1. ClawHub 搜索 - 使用真实 API
     if (source === 'all' || source === 'clawhub') {
       try {
-        // 尝试 clawhub.com 公开 API
         const clawhubRes = await fetch(
-          `https://clawhub.com/api/v1/search?q=${encodeURIComponent(query)}&limit=15`,
+          `https://clawhub.ai/api/v1/search?q=${encodeURIComponent(query)}&limit=15`,
           { 
-            headers: { 'Accept': 'application/json' },
+            headers: clawhubHeaders,
             next: { revalidate: 1800 }
           }
         );
         
         if (clawhubRes.ok) {
           const data = await clawhubRes.json();
-          if (Array.isArray(data)) {
-            data.forEach(skill => {
-              results.push({
-                name: skill.name || skill.slug || skill.title,
-                desc: skill.description || skill.name || skill.slug || skill.title,
-                score: skill.score || skill.relevance || 0,
-                source: 'clawhub',
-                install: 'clawdhub',
-                version: skill.version
-              });
+          (data.results || []).forEach(skill => {
+            results.push({
+              name: skill.slug,
+              desc: skill.summary || skill.displayName || skill.slug,
+              displayName: skill.displayName,
+              score: skill.score || 0,
+              source: 'clawhub',
+              install: 'clawdhub',
+              version: skill.version
             });
-          } else if (data.results && Array.isArray(data.results)) {
-            data.results.forEach(skill => {
-              results.push({
-                name: skill.name || skill.slug,
-                desc: skill.description || skill.name,
-                score: skill.score || 0,
-                source: 'clawhub',
-                install: 'clawdhub'
-              });
-            });
-          }
+          });
         }
       } catch (e) {
-        console.warn('ClawHub API not available:', e.message);
-      }
-      
-      // 如果 ClawHub API 失败，使用 GitHub 作为回退
-      if (results.length === 0 && (source === 'all' || source === 'clawhub')) {
-        console.warn('ClawHub unavailable, falling back to GitHub');
+        console.warn('ClawHub API error:', e.message);
       }
     }
 
@@ -96,11 +85,11 @@ export async function GET(request) {
           });
         }
       } catch (e) {
-        console.warn('GitHub API not available:', e.message);
+        console.warn('GitHub API error:', e.message);
       }
     }
 
-    // 3. skill.sh 搜索 - GitHub 搜索 skill.sh 相关
+    // 3. skill.sh 搜索
     if (source === 'all' || source === 'skillssh') {
       try {
         const ghRes = await fetch(
@@ -126,18 +115,18 @@ export async function GET(request) {
           });
         }
       } catch (e) {
-        console.warn('skill.sh search failed:', e.message);
+        console.warn('skill.sh search error:', e.message);
       }
     }
 
-    // 按相关性排序 (stars 优先)
+    // 按相关性排序
     results.sort((a, b) => {
       const scoreA = a.score || a.stars || 0;
       const scoreB = b.score || b.stars || 0;
       return scoreB - scoreA;
     });
 
-    // 去重 (同 name 只保留一个)
+    // 去重
     const seen = new Set();
     const deduped = results.filter(r => {
       if (seen.has(r.name)) return false;

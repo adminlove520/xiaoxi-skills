@@ -1,5 +1,5 @@
 // Leaderboard API - 各渠道 Top 10 Skills 排行榜
-// Vercel Serverless 兼容版本
+// 使用真实 ClawHub API + GitHub Topics
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -7,11 +7,16 @@ export async function GET(request) {
 
   // Vercel 环境变量
   const GH_TOKEN = process.env.GITHUB_TOKEN;
-  const CLAWHUB_TOKEN = process.env.CLAWHUB_TOKEN;
+  const CLAWHUB_TOKEN = process.env.CLAWHUB_TOKEN || process.env.CLAWHUB_TOKEN || 'clh_8ZsZYX4obpZZykBv6QCh11zxCgp1eE2ywMmohmoMUkE';
 
   const ghHeaders = {
     'Accept': 'application/vnd.github.v3+json',
     ...(GH_TOKEN && { 'Authorization': `Bearer ${GH_TOKEN}` })
+  };
+
+  const clawhubHeaders = {
+    'Accept': 'application/json',
+    ...(CLAWHUB_TOKEN && { 'Authorization': `Bearer ${CLAWHUB_TOKEN}` })
   };
 
   try {
@@ -21,13 +26,53 @@ export async function GET(request) {
       trending: []
     };
 
-    // 1. ClawHub Top 10 - 使用 clawhub search 命令
-    // 注意: Vercel Serverless 无法执行外部命令，使用静态数据 + GitHub 替代
-    // 实际排行榜数据来自 GitHub Topics 搜索
-    
-    // 2. GitHub Top 10 (按 stars) - 使用 topic 搜索
+    // 1. ClawHub Top 10 - 使用真实 API
+    try {
+      const categories = ['twitter', 'github', 'memory', 'search', 'browser', 'web', 'code', 'productivity', 'video', 'social'];
+      const seen = new Set();
+      
+      for (const cat of categories) {
+        try {
+          const clawhubRes = await fetch(
+            `https://clawhub.ai/api/v1/search?q=${encodeURIComponent(cat)}&limit=5`,
+            { 
+              headers: clawhubHeaders,
+              next: { revalidate: 1800 } // 30分钟缓存
+            }
+          );
+          
+          if (clawhubRes.ok) {
+            const data = await clawhubRes.json();
+            (data.results || []).forEach(skill => {
+              if (!seen.has(skill.slug)) {
+                seen.add(skill.slug);
+                rankings.clawhub.push({
+                  name: skill.slug,
+                  desc: skill.summary || skill.displayName || skill.slug,
+                  score: skill.score || 0,
+                  displayName: skill.displayName,
+                  category: cat,
+                  source: 'clawhub',
+                  install: 'clawdhub'
+                });
+              }
+            });
+          }
+        } catch (e) {
+          console.warn(`ClawHub search failed for ${cat}:`, e.message);
+        }
+      }
+      
+      rankings.clawhub = rankings.clawhub
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+    } catch (e) {
+      console.warn('ClawHub API error:', e.message);
+    }
+
+    // 2. GitHub Top 10 (按 stars)
     const topics = ['openclaw-skill', 'openclaw-skills', 'clawhub-skill', 'ai-agent-skill'];
-    const seen = new Set();
+    const ghSeen = new Set();
     
     for (const topic of topics) {
       try {
@@ -40,15 +85,15 @@ export async function GET(request) {
         );
         
         if (ghRes.status === 403) {
-          console.warn('GitHub API rate limited, using cached data');
+          console.warn('GitHub API rate limited');
           break;
         }
         
         if (ghRes.ok) {
           const data = await ghRes.json();
           (data.items || []).forEach(repo => {
-            if (!seen.has(repo.id)) {
-              seen.add(repo.id);
+            if (!ghSeen.has(repo.id)) {
+              ghSeen.add(repo.id);
               rankings.github.push({
                 name: repo.name.replace(/[-_](skill|skills)$/i, ''),
                 desc: repo.description || repo.name,
@@ -71,29 +116,40 @@ export async function GET(request) {
       .sort((a, b) => b.stars - a.stars)
       .slice(0, 10);
 
-    // 3. Trending - 基于 GitHub 数据的综合排名
-    rankings.trending = rankings.github
-      .map((skill, i) => ({
+    // 3. Trending - 综合排名
+    const trendingMap = new Map();
+    
+    rankings.clawhub.forEach((skill, i) => {
+      trendingMap.set(skill.name, {
         ...skill,
         rank: i + 1,
-        trendingScore: (10 - i) * 5 + Math.log10((skill.stars || 0) + 1) * 15
-      }))
+        trendingScore: (10 - i) * 8 + (skill.score || 0) * 10
+      });
+    });
+    
+    rankings.github.forEach((skill, i) => {
+      const existing = trendingMap.get(skill.name);
+      if (existing) {
+        existing.trendingScore += (10 - i) * 2 + Math.log10((skill.stars || 0) + 1) * 3;
+        existing.githubStars = skill.stars;
+      } else {
+        trendingMap.set(skill.name, {
+          ...skill,
+          rank: i + 1,
+          trendingScore: (10 - i) * 5 + Math.log10((skill.stars || 0) + 1) * 10
+        });
+      }
+    });
+    
+    rankings.trending = Array.from(trendingMap.values())
       .sort((a, b) => b.trendingScore - a.trendingScore)
       .slice(0, 10);
-
-    // 4. ClawHub 模拟数据 (基于 GitHub 高星项目)
-    // 因为 Vercel 无法执行 clawhub CLI，用 GitHub 数据模拟
-    rankings.clawhub = rankings.github.slice(0, 10).map((skill, i) => ({
-      ...skill,
-      score: (10 - i) * 0.5 + (skill.stars / 1000)
-    }));
 
     if (source !== 'all') {
       return Response.json({
         success: true,
         source,
-        rankings: rankings[source] || [],
-        note: source === 'clawhub' ? '基于 GitHub 数据模拟 ClawHub 排行' : undefined
+        rankings: rankings[source] || []
       });
     }
 
@@ -104,8 +160,7 @@ export async function GET(request) {
         github: rankings.github.length,
         trending: rankings.trending.length
       },
-      rankings,
-      rateLimited: false
+      rankings
     });
   } catch (error) {
     console.error('Leaderboard API error:', error);
