@@ -17,7 +17,8 @@ const SOURCE_COLORS = {
 const LEADERBOARD_TABS = [
   { key: 'trending', label: '🔥 综合趋势', color: '#667eea' },
   { key: 'github', label: '★ GitHub Top10', color: '#48bb78' },
-  { key: 'clawhub', label: '⚡ ClawHub 推荐', color: '#ed8936' }
+  { key: 'clawhub', label: '⚡ ClawHub 推荐', color: '#ed8936' },
+  { key: 'skillssh', label: '🔧 skill.sh 精选', color: '#f6c90e' }
 ];
 
 export default function Home() {
@@ -40,18 +41,21 @@ export default function Home() {
   const [leaderboard, setLeaderboard] = useState({
     trending: [],
     github: [],
-    clawhub: []
+    clawhub: [],
+    skillssh: []
   });
   const [leaderboardTab, setLeaderboardTab] = useState('trending');
   const [leaderboardLoading, setLeaderboardLoading] = useState({
     trending: false,
     github: false,
-    clawhub: false
+    clawhub: false,
+    skillssh: false
   });
   const [leaderboardError, setLeaderboardError] = useState({
     trending: null,
     github: null,
-    clawhub: null
+    clawhub: null,
+    skillssh: null
   });
   const [boardNote, setBoardNote] = useState(null);
 
