@@ -128,16 +128,27 @@ export default function Home() {
   }, [tab]);
 
   const getInstallCmd = (skill) => {
-    if (skill.install === 'cp') {
+    // 根据 source 决定正确的安装命令
+    if (skill.source === 'workspace') {
       return `cp -r ~/.openclaw/workspace/skills/${skill.name} ~/.openclaw/skills/`;
     }
-    if (skill.install === 'clawdhub') {
+    if (skill.source === 'openclaw') {
+      return `cp -r ~/.openclaw/skills/${skill.name} ~/.openclaw/skills/`;
+    }
+    if (skill.source === 'clawhub') {
       return `clawdhub install ${skill.name}`;
     }
-    if (skill.install === 'git' || skill.url) {
-      const baseUrl = skill.url?.replace('/blob/main', '').replace('github.com', 'github.com/') || `https://github.com/adminlove520/${skill.name}`;
-      return `git clone ${baseUrl}`;
+    if (skill.source === 'github' || skill.source === 'skillssh' || skill.url) {
+      if (skill.url) {
+        const baseUrl = skill.url.replace('/blob/main', '').replace('github.com', 'github.com/');
+        return `git clone ${baseUrl}`;
+      }
+      if (skill.repo) {
+        return `git clone https://github.com/${skill.repo}`;
+      }
+      return `clawdhub install ${skill.name}`;
     }
+    // fallback
     return `clawdhub install ${skill.name}`;
   };
 
@@ -296,16 +307,16 @@ export default function Home() {
                     </span>
                   </div>
                   <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <button 
                       onClick={() => copyToClipboard(getInstallCmd(skill))} 
                       style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
                     >
                       📋 安装
                     </button>
-                    <code style={{ fontSize: '10px', background: '#0a0a0f', padding: '4px 8px', borderRadius: '4px', color: '#666' }}>
-                      {skill.install || 'clawdhub'}
-                    </code>
+                    <span style={{ fontSize: '10px', color: '#666' }}>
+                      {skill.source === 'workspace' ? 'cp -r' : skill.source === 'openclaw' ? 'cp -r' : skill.source === 'clawhub' ? 'clawdhub' : 'git clone'}
+                    </span>
                     {renderStars(skill.stars)}
                     {renderScore(skill.score)}
                   </div>
@@ -378,13 +389,16 @@ export default function Home() {
                       </span>
                     </div>
                     <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5' }}>{skill.desc || skill.name}</p>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                       <button 
                         onClick={() => copyToClipboard(getInstallCmd(skill))} 
                         style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
                       >
                         📋 安装
                       </button>
+                      <span style={{ fontSize: '10px', color: '#666' }}>
+                        {skill.source === 'clawhub' ? 'clawdhub' : skill.source === 'github' || skill.source === 'skillssh' ? 'git clone' : 'clawdhub'}
+                      </span>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {renderStars(skill.stars)}
                         {renderScore(skill.score)}
