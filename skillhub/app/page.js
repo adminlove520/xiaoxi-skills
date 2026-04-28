@@ -90,39 +90,42 @@ export default function Home() {
     }
   };
 
-  const fetchLeaderboard = useCallback(async () => {
-    setLoadingBoard(true);
-    setBoardError(null);
-    setBoardNote(null);
-    try {
-      const res = await fetch(`${API_BASE}/leaderboard?source=${leaderboardTab}`, { 
-        signal: AbortSignal.timeout(15000) 
-      });
-      const data = await res.json();
-      if (data.success) {
-        setLeaderboard(prev => ({
-          ...prev,
-          [leaderboardTab]: data.rankings || []
-        }));
-        if (data.note) setBoardNote(data.note);
-      } else {
-        setBoardError(data.error || '加载失败');
-      }
-    } catch (e) {
-      setBoardError(e.name === 'TimeoutError' ? '请求超时' : e.message);
-    } finally {
-      setLoadingBoard(false);
-    }
-  }, [leaderboardTab]);
-
-  // Load leaderboard data when tab changes
+  // Load all leaderboard data once when entering tab
   useEffect(() => {
     if (tab === 'leaderboard') {
-      if (leaderboard[leaderboardTab].length === 0) {
-        fetchLeaderboard();
-      }
+      // Load all three at once
+      const sources = ['trending', 'github', 'clawhub'];
+      Promise.all(
+        sources.map(async (src) => {
+          try {
+            const res = await fetch(`${API_BASE}/leaderboard?source=${src}`, { 
+              signal: AbortSignal.timeout(15000) 
+            });
+            const data = await res.json();
+            if (data.success) {
+              return { source: src, rankings: data.rankings || [], note: data.note };
+            }
+          } catch (e) {
+            console.warn(`Failed to load ${src}:`, e.message);
+          }
+          return { source: src, rankings: [], note: null };
+        })
+      ).then(results => {
+        setLoadingBoard(false);
+        const newBoard = {};
+        let note = null;
+        results.forEach(r => {
+          newBoard[r.source] = r.rankings;
+          if (r.note) note = r.note;
+        });
+        setLeaderboard(newBoard);
+        if (note) setBoardNote(note);
+        if (newBoard.trending.length === 0 && newBoard.github.length === 0) {
+          setBoardError('加载失败，请刷新重试');
+        }
+      });
     }
-  }, [tab, leaderboardTab]);
+  }, [tab]);
 
   const getInstallCmd = (skill) => {
     if (skill.install === 'cp') {
@@ -447,7 +450,7 @@ export default function Home() {
           {boardError && !loadingBoard && (
             <div style={{ textAlign: 'center', padding: '24px' }}>
               <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {boardError}</div>
-              <button onClick={fetchLeaderboard} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
+              <button onClick={() => window.location.reload()} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
                 🔄 重试
               </button>
             </div>
