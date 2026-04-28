@@ -1,8 +1,8 @@
-// Skills 数据 - 静态降级数据源
-// 用于 Vercel Serverless 环境（不支持 execSync/GitHub API 调用）
+// Skills 数据 - 完整静态数据源
+// 包含 workspace(44) + openclaw(14) + clawhub(20) = 78 个 Skills
 
 const STATIC_SKILLS = [
-  // Workspace Skills
+  // ==================== WORKSPACE Skills (44个) ====================
   { name: 'agent-reach', desc: '全平台接入 (Twitter/Reddit/YouTube/B站等)', source: 'workspace', install: 'cp' },
   { name: 'auto-monitor', desc: '主动监控系统状态', source: 'workspace', install: 'cp' },
   { name: 'autocli', desc: '55+ 社交/内容网站 CLI', source: 'workspace', install: 'cp' },
@@ -48,7 +48,7 @@ const STATIC_SKILLS = [
   { name: 'self-reflection', desc: '自我反思', source: 'workspace', install: 'cp' },
   { name: 'avatar-helper', desc: '头像助手', source: 'workspace', install: 'cp' },
 
-  // OpenClaw 内置 Skills
+  // ==================== OPENCLAW 内置 Skills (14个) ====================
   { name: 'weather', desc: '天气查询', source: 'openclaw', install: 'cp' },
   { name: 'blucli', desc: 'BluOS 播放器控制', source: 'openclaw', install: 'cp' },
   { name: 'eightctl', desc: 'Eight Sleep 智能床垫', source: 'openclaw', install: 'cp' },
@@ -64,7 +64,7 @@ const STATIC_SKILLS = [
   { name: 'session-logs', desc: '会话日志', source: 'openclaw', install: 'cp' },
   { name: 'node-connect', desc: '节点连接', source: 'openclaw', install: 'cp' },
 
-  // ClawHub/Repo 常用 Skills
+  // ==================== CLAWHUB/REPO Skills (20个) ====================
   { name: 'bird', desc: 'Twitter 发推', source: 'clawhub', install: 'clawdhub' },
   { name: 'powerpoint-pptx', desc: 'PPT 生成', source: 'clawhub', install: 'clawdhub' },
   { name: 'chrome-cdp', desc: 'Chrome CDP 控制', source: 'clawhub', install: 'clawdhub' },

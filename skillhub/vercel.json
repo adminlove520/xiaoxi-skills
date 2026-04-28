@@ -1,5 +1,14 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "env": {
+    "GITHUB_TOKEN": "GitHub API token for increased rate limits"
+  },
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/**/*.js": {
+      "maxDuration": 10
+    }
+  }
 }

@@ -3,6 +3,16 @@ import { useState, useEffect, useCallback } from 'react';
 
 const API_BASE = '/api';
 
+// 分类颜色映射
+const SOURCE_COLORS = {
+  workspace: { bg: '#48bb7820', color: '#48bb78', label: 'Workspace' },
+  openclaw: { bg: '#ed893620', color: '#ed8936', label: 'OpenClaw' },
+  clawhub: { bg: '#667eea20', color: '#667eea', label: 'ClawHub' },
+  repo: { bg: '#38b2ac20', color: '#38b2ac', label: 'Repo' },
+  github: { bg: '#48bb7820', color: '#48bb78', label: 'GitHub' },
+  skillssh: { bg: '#f6c90e20', color: '#f6c90e', label: 'skill.sh' }
+};
+
 export default function Home() {
   const [tab, setTab] = useState('browse');
   const [skills, setSkills] = useState([]);
@@ -24,6 +34,7 @@ export default function Home() {
   const [leaderboardTab, setLeaderboardTab] = useState('trending');
   const [loadingBoard, setLoadingBoard] = useState(false);
   const [boardError, setBoardError] = useState(null);
+  const [boardNote, setBoardNote] = useState(null);
 
   // Fetch skills on mount
   useEffect(() => {
@@ -35,7 +46,7 @@ export default function Home() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/skills`, { 
-        signal: AbortSignal.timeout(10000) // 10s timeout
+        signal: AbortSignal.timeout(10000)
       });
       const data = await res.json();
       if (data.success) {
@@ -45,11 +56,7 @@ export default function Home() {
         setError(data.error || '加载失败');
       }
     } catch (e) {
-      if (e.name === 'TimeoutError') {
-        setError('请求超时，请检查网络连接');
-      } else {
-        setError(e.message);
-      }
+      setError(e.name === 'TimeoutError' ? '请求超时，请检查网络连接' : e.message);
     } finally {
       setLoading(false);
     }
@@ -86,13 +93,18 @@ export default function Home() {
   const fetchLeaderboard = useCallback(async () => {
     setLoadingBoard(true);
     setBoardError(null);
+    setBoardNote(null);
     try {
-      const res = await fetch(`${API_BASE}/leaderboard`, { 
+      const res = await fetch(`${API_BASE}/leaderboard?source=${leaderboardTab}`, { 
         signal: AbortSignal.timeout(15000) 
       });
       const data = await res.json();
       if (data.success) {
-        setLeaderboard(data.rankings);
+        setLeaderboard(prev => ({
+          ...prev,
+          [leaderboardTab]: data.rankings || []
+        }));
+        if (data.note) setBoardNote(data.note);
       } else {
         setBoardError(data.error || '加载失败');
       }
@@ -101,13 +113,16 @@ export default function Home() {
     } finally {
       setLoadingBoard(false);
     }
-  }, []);
+  }, [leaderboardTab]);
 
+  // Load leaderboard data when tab changes
   useEffect(() => {
-    if (tab === 'leaderboard' && leaderboard.trending.length === 0) {
-      fetchLeaderboard();
+    if (tab === 'leaderboard') {
+      if (leaderboard[leaderboardTab].length === 0) {
+        fetchLeaderboard();
+      }
     }
-  }, [tab, leaderboard.trending.length, fetchLeaderboard]);
+  }, [tab, leaderboardTab]);
 
   const getInstallCmd = (skill) => {
     if (skill.install === 'cp') {
@@ -124,10 +139,8 @@ export default function Home() {
   };
 
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      // Silent success
-    }).catch(() => {
-      alert('复制失败: ' + text);
+    navigator.clipboard.writeText(text).catch(() => {
+      alert('复制失败');
     });
   };
 
@@ -135,40 +148,36 @@ export default function Home() {
   const filteredSkills = skills.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
                        (s.desc && s.desc.toLowerCase().includes(search.toLowerCase()));
-    const matchFilter = filter === 'all' || s.source === filter || s.install === filter;
+    const matchFilter = filter === 'all' || s.source === filter;
     return matchSearch && matchFilter;
   });
 
+  const getSourceStyle = (source) => {
+    const style = SOURCE_COLORS[source] || SOURCE_COLORS.repo;
+    return { background: style.bg, color: style.color };
+  };
+
+  const getSourceLabel = (source) => {
+    return SOURCE_COLORS[source]?.label || source;
+  };
+
   const renderStars = (count) => {
     if (!count) return null;
-    return <span style={{ color: '#f6c90e', marginLeft: '8px' }}>★ {count.toLocaleString()}</span>;
+    return <span style={{ color: '#f6c90e' }}>★ {count.toLocaleString()}</span>;
   };
 
   const renderScore = (score) => {
     if (!score) return null;
-    return <span style={{ color: '#667eea', marginLeft: '8px' }}>⚡ {typeof score === 'number' ? score.toFixed(2) : score}</span>;
+    return <span style={{ color: '#667eea' }}>⚡ {typeof score === 'number' ? score.toFixed(2) : score}</span>;
   };
 
-  // Tab button style helper
-  const tabBtn = (key, label) => (
-    <button
-      key={key}
-      onClick={() => setTab(key)}
-      style={{
-        padding: '12px 24px',
-        background: tab === key ? '#667eea' : 'transparent',
-        border: tab === key ? 'none' : '1px solid #2d2d4a',
-        borderRadius: '8px',
-        color: '#fff',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: tab === key ? 'bold' : 'normal',
-        transition: 'all 0.2s'
-      }}
-    >
-      {label}
-    </button>
-  );
+  // Stats for browse tab
+  const stats = [
+    { key: 'all', label: '全部', color: '#667eea', count: skills.length },
+    { key: 'workspace', label: 'Workspace', color: '#48bb78', count: skills.filter(s => s.source === 'workspace').length },
+    { key: 'openclaw', label: 'OpenClaw', color: '#ed8936', count: skills.filter(s => s.source === 'openclaw').length },
+    { key: 'clawhub', label: 'ClawHub', color: '#667eea', count: skills.filter(s => s.source === 'clawhub').length }
+  ];
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e0e0e0' }}>
@@ -190,7 +199,24 @@ export default function Home() {
           { key: 'browse', label: '📦 浏览' },
           { key: 'discover', label: '🔍 发现' },
           { key: 'leaderboard', label: '🏆 排行榜' }
-        ].map(t => tabBtn(t.key, t.label))}
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            style={{
+              padding: '12px 24px',
+              background: tab === t.key ? '#667eea' : 'transparent',
+              border: tab === t.key ? 'none' : '1px solid #2d2d4a',
+              borderRadius: '8px',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: tab === t.key ? 'bold' : 'normal'
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {/* ==================== BROWSE TAB ==================== */}
@@ -207,31 +233,37 @@ export default function Home() {
             />
             <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px' }}>
               <option value="all">全部来源</option>
-              <option value="workspace">Workspace</option>
-              <option value="openclaw">OpenClaw</option>
-              <option value="clawhub">ClawHub</option>
-              <option value="repo">Repo</option>
+              <option value="workspace">Workspace ({skills.filter(s => s.source === 'workspace').length})</option>
+              <option value="openclaw">OpenClaw ({skills.filter(s => s.source === 'openclaw').length})</option>
+              <option value="clawhub">ClawHub ({skills.filter(s => s.source === 'clawhub').length})</option>
             </select>
           </div>
 
-          {/* Stats */}
+          {/* Stats Bar */}
           {!loading && !error && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', padding: '0 24px 24px', flexWrap: 'wrap' }}>
-              {[
-                { key: 'all', label: '结果', color: '#667eea', count: filteredSkills.length },
-                { key: 'workspace', label: 'Workspace', color: '#48bb78', count: skills.filter(s => s.source === 'workspace').length },
-                { key: 'openclaw', label: 'OpenClaw', color: '#ed8936', count: skills.filter(s => s.source === 'openclaw').length },
-                { key: 'clawhub', label: 'ClawHub', color: '#38b2ac', count: skills.filter(s => s.source === 'clawhub' || s.source === 'repo').length }
-              ].map(s => (
-                <div key={s.key} style={{ background: '#1a1a2e', padding: '12px 24px', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: s.color }}>{s.count}</span>
-                  <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>{s.label}</span>
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', padding: '0 24px 24px', flexWrap: 'wrap' }}>
+              {stats.map(s => (
+                <button
+                  key={s.key}
+                  onClick={() => setFilter(s.key)}
+                  style={{
+                    background: filter === s.key ? s.color + '30' : '#1a1a2e',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: filter === s.key ? `1px solid ${s.color}` : '1px solid #2d2d4a',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    minWidth: '100px'
+                  }}
+                >
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: s.color }}>{s.count}</div>
+                  <div style={{ fontSize: '11px', color: '#888' }}>{s.label}</div>
+                </button>
               ))}
             </div>
           )}
 
-          {/* Loading State */}
+          {/* Loading */}
           {loading && (
             <div style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🦞</div>
@@ -239,14 +271,11 @@ export default function Home() {
             </div>
           )}
 
-          {/* Error State */}
+          {/* Error */}
           {error && (
             <div style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {error}</div>
-              <button 
-                onClick={fetchSkills}
-                style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontSize: '14px' }}
-              >
+              <button onClick={fetchSkills} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
                 🔄 重试
               </button>
             </div>
@@ -256,18 +285,18 @@ export default function Home() {
           {!loading && !error && (
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
               {filteredSkills.length > 0 ? filteredSkills.map((skill) => (
-                <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a', transition: 'border-color 0.2s, transform 0.2s' }}>
+                <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                     <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
-                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: skill.source === 'workspace' ? '#48bb7820' : skill.source === 'openclaw' ? '#ed893620' : '#38b2ac20', color: skill.source === 'workspace' ? '#48bb78' : skill.source === 'openclaw' ? '#ed8936' : '#38b2ac' }}>
-                      {skill.source}
+                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
+                      {getSourceLabel(skill.source)}
                     </span>
                   </div>
                   <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <button 
                       onClick={() => copyToClipboard(getInstallCmd(skill))} 
-                      style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
                     >
                       📋 安装
                     </button>
@@ -303,8 +332,9 @@ export default function Home() {
               />
               <select value={discoverSource} onChange={(e) => setDiscoverSource(e.target.value)} style={{ padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px' }}>
                 <option value="all">全部渠道</option>
-                <option value="clawhub">ClawHub</option>
-                <option value="github">GitHub</option>
+                <option value="clawhub">⚡ ClawHub</option>
+                <option value="github">★ GitHub</option>
+                <option value="skillssh">🔧 skill.sh</option>
               </select>
               <button 
                 type="submit" 
@@ -340,8 +370,8 @@ export default function Home() {
                   <div key={`${skill.source}-${skill.name}-${i}`} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: skill.source === 'clawhub' ? '#667eea20' : '#48bb7820', color: skill.source === 'clawhub' ? '#667eea' : '#48bb78' }}>
-                        {skill.source}
+                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
+                        {getSourceLabel(skill.source)}
                       </span>
                     </div>
                     <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5' }}>{skill.desc || skill.name}</p>
@@ -366,7 +396,7 @@ export default function Home() {
           {!discovering && discoverResults.length === 0 && !discoverError && !discoverQuery && (
             <div style={{ textAlign: 'center', padding: '64px 24px', color: '#666' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
-              <div>输入关键词开始搜索 ClawHub 和 GitHub 上的 Skills</div>
+              <div>输入关键词搜索 ClawHub、GitHub、skill.sh 上的 Skills</div>
             </div>
           )}
         </>
@@ -379,8 +409,8 @@ export default function Home() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '0 24px 24px' }}>
             {[
               { key: 'trending', label: '🔥 综合趋势' },
-              { key: 'clawhub', label: '⚡ ClawHub' },
-              { key: 'github', label: '★ GitHub' }
+              { key: 'github', label: '★ GitHub Top10' },
+              { key: 'clawhub', label: '⚡ ClawHub 推荐' }
             ].map(t => (
               <button
                 key={t.key}
@@ -400,6 +430,13 @@ export default function Home() {
             ))}
           </div>
 
+          {/* Note */}
+          {boardNote && (
+            <div style={{ textAlign: 'center', padding: '0 24px 16px', color: '#888', fontSize: '12px' }}>
+              ℹ️ {boardNote}
+            </div>
+          )}
+
           {loadingBoard && (
             <div style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
@@ -410,10 +447,7 @@ export default function Home() {
           {boardError && !loadingBoard && (
             <div style={{ textAlign: 'center', padding: '24px' }}>
               <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {boardError}</div>
-              <button 
-                onClick={fetchLeaderboard}
-                style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}
-              >
+              <button onClick={fetchLeaderboard} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
                 🔄 重试
               </button>
             </div>
@@ -461,9 +495,6 @@ export default function Home() {
                   <div style={{ textAlign: 'right', minWidth: '80px' }}>
                     {renderStars(skill.stars)}
                     {renderScore(skill.score)}
-                    {skill.trendingScore && (
-                      <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>评分: {typeof skill.trendingScore === 'number' ? skill.trendingScore.toFixed(1) : skill.trendingScore}</div>
-                    )}
                   </div>
                   <button 
                     onClick={() => copyToClipboard(getInstallCmd(skill))} 
