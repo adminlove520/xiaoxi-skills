@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE = '/api';
 
@@ -36,7 +36,7 @@ export default function Home() {
   const [discovering, setDiscovering] = useState(false);
   const [discoverError, setDiscoverError] = useState(null);
   
-  // Leaderboard state - 改为每 Tab 独立加载状态
+  // Leaderboard state
   const [leaderboard, setLeaderboard] = useState({
     trending: [],
     github: [],
@@ -55,12 +55,15 @@ export default function Home() {
   });
   const [boardNote, setBoardNote] = useState(null);
 
-  // Fetch skills on mount
+  // 使用 ref 跟踪已加载的数据源，避免闭包问题
+  const loadedSources = useRef(new Set());
+
+  // Fetch skills
   useEffect(() => {
     fetchSkills();
   }, []);
 
-  const fetchSkills = useCallback(async () => {
+  const fetchSkills = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -79,7 +82,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   const handleDiscover = async (e) => {
     e?.preventDefault();
@@ -109,14 +112,13 @@ export default function Home() {
     }
   };
 
-  // 按需加载单个 leaderboard 数据源
+  // 按需加载单个 leaderboard 数据源 - 不依赖外部状态
   const fetchLeaderboardSource = useCallback(async (source) => {
-    // 如果已有数据，不重复加载
-    if (leaderboard[source].length > 0) {
+    // 使用 ref 检查是否已加载，避免闭包问题
+    if (loadedSources.current.has(source) && leaderboard[source]?.length > 0) {
       return;
     }
 
-    // 设置该 source 的加载状态
     setLeaderboardLoading(prev => ({ ...prev, [source]: true }));
     setLeaderboardError(prev => ({ ...prev, [source]: null }));
 
@@ -127,10 +129,17 @@ export default function Home() {
       const data = await res.json();
       
       if (data.success) {
-        setLeaderboard(prev => ({
-          ...prev,
-          [source]: data.rankings || []
-        }));
+        setLeaderboard(prev => {
+          const newData = data.rankings || [];
+          // 更新 ref
+          if (newData.length > 0) {
+            loadedSources.current.add(source);
+          }
+          return {
+            ...prev,
+            [source]: newData
+          };
+        });
         if (data.note) setBoardNote(data.note);
       } else {
         setLeaderboardError(prev => ({ ...prev, [source]: data.error || '加载失败' }));
@@ -141,7 +150,7 @@ export default function Home() {
     } finally {
       setLeaderboardLoading(prev => ({ ...prev, [source]: false }));
     }
-  }, [leaderboard]);
+  }, []); // 空依赖数组，不依赖外部状态
 
   // 当 Tab 切换到 leaderboard 时，加载当前选中的数据源
   useEffect(() => {
@@ -174,9 +183,7 @@ export default function Home() {
   };
 
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).catch(() => {
-      alert('复制失败');
-    });
+    navigator.clipboard.writeText(text).catch(() => {});
   };
 
   const filteredSkills = skills.filter(s => {
@@ -211,6 +218,12 @@ export default function Home() {
     { key: 'openclaw', label: 'OpenClaw', color: '#ed8936', count: skills.filter(s => s.source === 'openclaw').length },
     { key: 'clawhub', label: 'ClawHub', color: '#667eea', count: skills.filter(s => s.source === 'clawhub').length }
   ];
+
+  // 重试函数
+  const retryLeaderboard = (source) => {
+    loadedSources.current.delete(source);
+    fetchLeaderboardSource(source);
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e0e0e0' }}>
@@ -271,6 +284,7 @@ export default function Home() {
             </select>
           </div>
 
+          {/* Stats Bar */}
           {!loading && !error && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', padding: '0 24px 24px', flexWrap: 'wrap' }}>
               {stats.map(s => (
@@ -294,6 +308,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* Loading State */}
           {loading && (
             <div style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🦞</div>
@@ -301,6 +316,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* Error State */}
           {error && (
             <div style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {error}</div>
@@ -310,37 +326,43 @@ export default function Home() {
             </div>
           )}
 
+          {/* Skills Grid */}
           {!loading && !error && (
-            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-              {filteredSkills.length > 0 ? filteredSkills.map((skill) => (
-                <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
-                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
-                      {getSourceLabel(skill.source)}
-                    </span>
-                  </div>
-                  <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <button 
-                      onClick={() => copyToClipboard(getInstallCmd(skill))} 
-                      style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
-                    >
-                      📋 安装
-                    </button>
-                    <span style={{ fontSize: '10px', color: '#666' }}>
-                      {skill.source === 'workspace' ? 'cp -r' : skill.source === 'openclaw' ? 'cp -r' : skill.source === 'clawhub' ? 'clawdhub' : 'git clone'}
-                    </span>
-                    {renderStars(skill.stars)}
-                    {renderScore(skill.score)}
-                  </div>
+            <>
+              {filteredSkills.length > 0 ? (
+                <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                  {filteredSkills.map((skill) => (
+                    <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
+                          {getSourceLabel(skill.source)}
+                        </span>
+                      </div>
+                      <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => copyToClipboard(getInstallCmd(skill))} 
+                          style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
+                        >
+                          📋 安装
+                        </button>
+                        <span style={{ fontSize: '10px', color: '#666' }}>
+                          {skill.source === 'workspace' ? 'cp -r' : skill.source === 'openclaw' ? 'cp -r' : skill.source === 'clawhub' ? 'clawdhub' : 'git clone'}
+                        </span>
+                        {renderStars(skill.stars)}
+                        {renderScore(skill.score)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )) : (
-                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '48px', color: '#666' }}>
-                  没有找到匹配的 Skills
+              ) : (
+                <div style={{ textAlign: 'center', padding: '64px 24px', color: '#666' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+                  <div>没有找到匹配的 Skills</div>
                 </div>
               )}
-            </div>
+            </>
           )}
         </>
       )}
@@ -461,7 +483,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Loading State - 只显示当前 Tab 的加载状态 */}
+          {/* Loading State */}
           {leaderboardLoading[leaderboardTab] && (
             <div style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
@@ -469,17 +491,17 @@ export default function Home() {
             </div>
           )}
 
-          {/* Error State - 只显示当前 Tab 的错误 */}
+          {/* Error State */}
           {leaderboardError[leaderboardTab] && !leaderboardLoading[leaderboardTab] && (
             <div style={{ textAlign: 'center', padding: '24px' }}>
               <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {leaderboardError[leaderboardTab]}</div>
-              <button onClick={() => fetchLeaderboardSource(leaderboardTab)} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
+              <button onClick={() => retryLeaderboard(leaderboardTab)} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
                 🔄 重试
               </button>
             </div>
           )}
 
-          {/* Data Display - 只显示当前 Tab 的数据 */}
+          {/* Data Display */}
           {!leaderboardLoading[leaderboardTab] && !leaderboardError[leaderboardTab] && leaderboard[leaderboardTab]?.length > 0 && (
             <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px 48px' }}>
               {leaderboard[leaderboardTab].map((skill, i) => (
@@ -534,10 +556,11 @@ export default function Home() {
             </div>
           )}
 
-          {/* Empty State - 只显示当前 Tab 的空状态 */}
+          {/* Empty State */}
           {!leaderboardLoading[leaderboardTab] && !leaderboardError[leaderboardTab] && leaderboard[leaderboardTab]?.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '48px', color: '#666' }}>
-              暂无数据
+            <div style={{ textAlign: 'center', padding: '64px 24px', color: '#666' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
+              <div>暂无数据</div>
             </div>
           )}
         </>
