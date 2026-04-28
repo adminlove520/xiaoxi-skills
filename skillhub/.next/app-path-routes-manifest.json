@@ -1,5 +1,12 @@
 {
   "/_global-error/page": "/_global-error",
   "/_not-found/page": "/_not-found",
-  "/page": "/"
+  "/api/auth/callback/route": "/api/auth/callback",
+  "/api/auth/login/route": "/api/auth/login",
+  "/api/discover/route": "/api/discover",
+  "/api/leaderboard/route": "/api/leaderboard",
+  "/api/skills/route": "/api/skills",
+  "/api/submit/route": "/api/submit",
+  "/page": "/",
+  "/submit/page": "/submit"
 }

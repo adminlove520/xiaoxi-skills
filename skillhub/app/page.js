@@ -5,9 +5,10 @@ const API_BASE = '/api';
 
 // 分类颜色映射
 const SOURCE_COLORS = {
-  workspace: { bg: '#48bb7820', color: '#48bb78', label: 'Workspace' },
+  local: { bg: '#48bb7820', color: '#48bb78', label: 'Local' },
   openclaw: { bg: '#ed893620', color: '#ed8936', label: 'OpenClaw' },
   clawhub: { bg: '#667eea20', color: '#667eea', label: 'ClawHub' },
+  pending: { bg: '#f6c90e20', color: '#f6c90e', label: 'Pending' },
   repo: { bg: '#38b2ac20', color: '#38b2ac', label: 'Repo' },
   github: { bg: '#48bb7820', color: '#48bb78', label: 'GitHub' },
   skillssh: { bg: '#f6c90e20', color: '#f6c90e', label: 'skill.sh' }
@@ -29,6 +30,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  
+  // Detail Modal state
+  const [detailSkill, setDetailSkill] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
   
   // Discover state
   const [discoverQuery, setDiscoverQuery] = useState('');
@@ -224,15 +229,27 @@ export default function Home() {
 
   const stats = [
     { key: 'all', label: '全部', color: '#667eea', count: skills.length },
-    { key: 'workspace', label: 'Workspace', color: '#48bb78', count: skills.filter(s => s.source === 'workspace').length },
+    { key: 'local', label: 'Local', color: '#48bb78', count: skills.filter(s => s.source === 'local').length },
     { key: 'openclaw', label: 'OpenClaw', color: '#ed8936', count: skills.filter(s => s.source === 'openclaw').length },
-    { key: 'clawhub', label: 'ClawHub', color: '#667eea', count: skills.filter(s => s.source === 'clawhub').length }
+    { key: 'pending', label: 'Pending', color: '#f6c90e', count: skills.filter(s => s.source === 'pending').length }
   ];
 
   // 重试函数
   const retryLeaderboard = (source) => {
     loadedSources.current.delete(source);
     fetchLeaderboardSource(source);
+  };
+
+  // 打开详情弹窗
+  const openDetail = (skill) => {
+    setDetailSkill(skill);
+    setShowDetail(true);
+  };
+
+  // 关闭详情弹窗
+  const closeDetail = () => {
+    setShowDetail(false);
+    setTimeout(() => setDetailSkill(null), 200);
   };
 
   return (
@@ -254,14 +271,21 @@ export default function Home() {
         {[
           { key: 'browse', label: '📦 浏览' },
           { key: 'discover', label: '🔍 发现' },
-          { key: 'leaderboard', label: '🏆 排行榜' }
+          { key: 'leaderboard', label: '🏆 排行榜' },
+          { key: 'submit', label: '📤 投稿' }
         ].map(t => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => {
+              if (t.key === 'submit') {
+                window.location.href = '/submit';
+              } else {
+                setTab(t.key);
+              }
+            }}
             style={{
               padding: '12px 24px',
-              background: tab === t.key ? '#667eea' : 'transparent',
+              background: tab === t.key ? '#48bb78' : 'transparent',
               border: tab === t.key ? 'none' : '1px solid #2d2d4a',
               borderRadius: '8px',
               color: '#fff',
@@ -288,9 +312,9 @@ export default function Home() {
             />
             <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px' }}>
               <option value="all">全部来源</option>
-              <option value="workspace">Workspace ({skills.filter(s => s.source === 'workspace').length})</option>
+              <option value="local">Local ({skills.filter(s => s.source === 'local').length})</option>
               <option value="openclaw">OpenClaw ({skills.filter(s => s.source === 'openclaw').length})</option>
-              <option value="clawhub">ClawHub ({skills.filter(s => s.source === 'clawhub').length})</option>
+              <option value="pending">Pending ({skills.filter(s => s.source === 'pending').length})</option>
             </select>
           </div>
 
@@ -345,13 +369,27 @@ export default function Home() {
                     {filteredSkills.map((skill) => (
                       <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          {skill.url ? (
-                            <a href={skill.url} target="_blank" rel="noopener noreferrer" style={{ margin: 0, fontSize: '16px', color: '#667eea', textDecoration: 'none' }}>
-                              {skill.name} ↗
-                            </a>
-                          ) : (
-                            <h3 style={{ margin: 0, fontSize: '16px', color: skill.install?.includes('内置') ? '#888' : '#667eea' }}>{skill.name}</h3>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button 
+                              onClick={() => openDetail(skill)}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                            >
+                              <span style={{ margin: 0, fontSize: '16px', color: '#667eea', textDecoration: 'none' }}>
+                                {skill.name}
+                              </span>
+                              <span style={{ fontSize: '12px', color: '#667eea', marginLeft: '4px' }}>↗</span>
+                            </button>
+                            {skill.status === 'pending' && (
+                              <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '3px', background: '#f6c90e20', color: '#f6c90e' }}>
+                                待发布
+                              </span>
+                            )}
+                            {skill.status === 'builtin' && (
+                              <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '3px', background: '#48bb7820', color: '#48bb78' }}>
+                                内置
+                              </span>
+                            )}
+                          </div>
                           <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
                             {getSourceLabel(skill.source)}
                           </span>
@@ -387,9 +425,10 @@ export default function Home() {
                     <button
                       onClick={() => {
                         const urls = {
-                          workspace: 'https://github.com/adminlove520/xiaoxi-skills',
+                          local: 'https://github.com/adminlove520/xiaoxi-skills',
                           openclaw: 'https://github.com/openclaw/openclaw',
                           clawhub: 'https://clawhub.com/explore',
+                          pending: 'https://github.com/adminlove520/xiaoxi-skills/issues',
                           all: 'https://skills.sh'
                         };
                         window.open(urls[filter] || 'https://skills.sh', '_blank');
@@ -405,7 +444,7 @@ export default function Home() {
                         fontWeight: 'bold'
                       }}
                     >
-                      More from {filter === 'all' ? 'All Sources' : filter === 'workspace' ? 'Workspace' : filter === 'openclaw' ? 'OpenClaw' : filter === 'clawhub' ? 'ClawHub' : 'Browse'} →
+                      More from {filter === 'all' ? 'All Sources' : filter} →
                     </button>
                   </div>
                 </>
@@ -661,6 +700,153 @@ export default function Home() {
             </div>
           )}
         </>
+      )}
+
+      {/* Detail Modal */}
+      {showDetail && detailSkill && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '24px'
+          }}
+          onClick={closeDetail}
+        >
+          <div 
+            style={{
+              background: '#1a1a2e',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              border: '1px solid #2d2d4a',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeDetail}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: '#2d2d4a',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ×
+            </button>
+            
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <h2 style={{ margin: 0, fontSize: '24px', color: '#fff' }}>{detailSkill.name}</h2>
+                <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', ...getSourceStyle(detailSkill.source) }}>
+                  {getSourceLabel(detailSkill.source)}
+                </span>
+                {detailSkill.status === 'pending' && (
+                  <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', background: '#f6c90e20', color: '#f6c90e' }}>
+                    待发布
+                  </span>
+                )}
+              </div>
+              <p style={{ margin: 0, color: '#aaa', fontSize: '14px', lineHeight: '1.6' }}>
+                {detailSkill.desc || detailSkill.name}
+              </p>
+            </div>
+            
+            {/* Install Section */}
+            <div style={{ background: '#0a0a0f', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>安装命令</div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <code style={{ flex: 1, background: '#1a1a2e', padding: '12px', borderRadius: '8px', fontSize: '13px', color: '#667eea', wordBreak: 'break-all' }}>
+                  {detailSkill.install}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(detailSkill.install)}
+                  style={{
+                    padding: '10px 16px',
+                    background: '#667eea',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  📋 复制
+                </button>
+              </div>
+            </div>
+            
+            {/* GitHub Link */}
+            {detailSkill.url && (
+              <div style={{ marginBottom: '20px' }}>
+                <a 
+                  href={detailSkill.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 20px',
+                    background: '#48bb7820',
+                    border: '1px solid #48bb7840',
+                    borderRadius: '8px',
+                    color: '#48bb78',
+                    textDecoration: 'none',
+                    fontSize: '13px'
+                  }}
+                >
+                  ↗ 在 GitHub 查看源码
+                </a>
+              </div>
+            )}
+            
+            {/* Status Badge */}
+            {detailSkill.status && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {detailSkill.status === 'ready' && (
+                  <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', background: '#48bb7820', color: '#48bb78' }}>
+                    ✓ 可安装
+                  </span>
+                )}
+                {detailSkill.status === 'pending' && (
+                  <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', background: '#f6c90e20', color: '#f6c90e' }}>
+                    ⏳ 待发布
+                  </span>
+                )}
+                {detailSkill.status === 'builtin' && (
+                  <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', background: '#667eea20', color: '#667eea' }}>
+                    ⚡ 内置技能
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Footer */}

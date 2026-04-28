@@ -104,7 +104,7 @@ self.__SERVER_FILES_MANIFEST={
         "transform": "lodash/{{member}}"
       }
     },
-    "outputFileTracingRoot": "/tmp/skillhub",
+    "outputFileTracingRoot": "/root",
     "cacheComponents": false,
     "cacheLife": {
       "default": {
@@ -305,12 +305,12 @@ self.__SERVER_FILES_MANIFEST={
     "bundlePagesRouterDependencies": false,
     "configFileName": "next.config.js",
     "turbopack": {
-      "root": "/tmp/skillhub"
+      "root": "/root"
     },
     "distDirRoot": ".next"
   },
-  "appDir": "/tmp/skillhub",
-  "relativeAppDir": "",
+  "appDir": "/root/.openclaw/workspace/xiaoxi-skills/skillhub",
+  "relativeAppDir": ".openclaw/workspace/xiaoxi-skills/skillhub",
   "files": [
     ".next/routes-manifest.json",
     ".next/server/pages-manifest.json",

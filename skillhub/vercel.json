@@ -3,12 +3,16 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "env": {
-    "GITHUB_TOKEN": "GitHub API token for increased rate limits"
+    "GITHUB_TOKEN": "GitHub API token for increased rate limits",
+    "GITHUB_CLIENT_ID": "GitHub OAuth App client ID",
+    "GITHUB_CLIENT_SECRET": "GitHub OAuth App client secret",
+    "GITHUB_REDIRECT_URI": "OAuth callback URL",
+    "CLAWHUB_TOKEN": "ClawHub API token"
   },
   "regions": ["iad1"],
   "functions": {
     "app/api/**/*.js": {
-      "maxDuration": 10
+      "maxDuration": 30
     }
   }
 }

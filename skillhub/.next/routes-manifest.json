@@ -40,6 +40,48 @@
       "regex": "^/_not\\-found(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/auth/callback",
+      "regex": "^/api/auth/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/callback(?:/)?$"
+    },
+    {
+      "page": "/api/auth/login",
+      "regex": "^/api/auth/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/login(?:/)?$"
+    },
+    {
+      "page": "/api/discover",
+      "regex": "^/api/discover(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/discover(?:/)?$"
+    },
+    {
+      "page": "/api/leaderboard",
+      "regex": "^/api/leaderboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/leaderboard(?:/)?$"
+    },
+    {
+      "page": "/api/skills",
+      "regex": "^/api/skills(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/skills(?:/)?$"
+    },
+    {
+      "page": "/api/submit",
+      "regex": "^/api/submit(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/submit(?:/)?$"
+    },
+    {
+      "page": "/submit",
+      "regex": "^/submit(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/submit(?:/)?$"
     }
   ],
   "dataRoutes": [],
