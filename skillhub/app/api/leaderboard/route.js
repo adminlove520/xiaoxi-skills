@@ -1,4 +1,5 @@
 // Leaderboard API - 各渠道 Top 10 Skills 排行榜
+// Vercel Serverless 兼容版本
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -11,47 +12,52 @@ export async function GET(request) {
       trending: []
     };
 
-    // 1. ClawHub Top 10 (按 score/relevance)
+    // 1. ClawHub Top 10
     try {
       const categories = ['twitter', 'github', 'memory', 'search', 'browser', 'web', 'code', 'productivity'];
-      const clawhubTop = [];
       
       for (const cat of categories) {
         try {
-          const { execSync } = require('child_process');
-          const output = execSync(`clawhub search "${cat}" --json 2>/dev/null || echo "[]"`, { 
-            encoding: 'utf8',
-            timeout: 8000 
-          });
-          const results = JSON.parse(output || '[]');
-          results.slice(0, 3).forEach(skill => {
-            if (!clawhubTop.find(s => s.name === skill.name)) {
-              clawhubTop.push({
-                name: skill.name,
-                desc: skill.description || skill.name,
-                score: skill.score || skill.relevance || 0,
-                category: cat,
-                source: 'clawhub',
-                install: 'clawdhub'
+          const clawhubRes = await fetch(
+            `https://registry.clawhub.com/api/search?q=${cat}&limit=5`,
+            { 
+              headers: { 'Accept': 'application/json' },
+              next: { revalidate: 3600 }
+            }
+          );
+          
+          if (clawhubRes.ok) {
+            const data = await clawhubRes.json();
+            if (Array.isArray(data)) {
+              data.slice(0, 3).forEach(skill => {
+                if (!rankings.clawhub.find(s => s.name === (skill.name || skill.slug))) {
+                  rankings.clawhub.push({
+                    name: skill.name || skill.slug,
+                    desc: skill.description || skill.name || skill.slug,
+                    score: skill.score || skill.relevance || 0,
+                    category: cat,
+                    source: 'clawhub',
+                    install: 'clawdhub'
+                  });
+                }
               });
             }
-          });
+          }
         } catch (e) {
-          // Continue
+          // Continue with next category
         }
       }
       
-      rankings.clawhub = clawhubTop
+      rankings.clawhub = rankings.clawhub
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
     } catch (e) {
-      console.error('ClawHub leaderboard error:', e.message);
+      console.warn('ClawHub leaderboard error:', e.message);
     }
 
     // 2. GitHub Top 10 (按 stars)
     try {
-      const topics = ['openclaw-skill', 'openclaw-skills', 'clawhub-skill'];
-      const githubTop = [];
+      const topics = ['openclaw-skill', 'openclaw-skills'];
       
       for (const topic of topics) {
         const ghRes = await fetch(
@@ -61,12 +67,13 @@ export async function GET(request) {
             next: { revalidate: 3600 }
           }
         );
+        
         if (ghRes.ok) {
           const data = await ghRes.json();
           (data.items || []).forEach(repo => {
-            if (!githubTop.find(s => s.name === repo.name)) {
-              githubTop.push({
-                name: repo.name.replace('-skill', '').replace('-skills', ''),
+            if (!rankings.github.find(s => s.name === repo.name)) {
+              rankings.github.push({
+                name: repo.name.replace(/[-_](skill|skills)$/i, ''),
                 desc: repo.description || repo.name,
                 repo: repo.full_name,
                 stars: repo.stargazers_count,
@@ -80,31 +87,38 @@ export async function GET(request) {
         }
       }
       
-      rankings.github = githubTop
+      rankings.github = rankings.github
         .sort((a, b) => b.stars - a.stars)
         .slice(0, 10);
     } catch (e) {
-      console.error('GitHub leaderboard error:', e.message);
+      console.warn('GitHub leaderboard error:', e.message);
     }
 
-    // 3. Trending - 合并多渠道高评分
-    const trendingSet = new Map();
+    // 3. Trending - 合并多渠道
+    const trendingMap = new Map();
     
     rankings.clawhub.forEach((skill, i) => {
-      trendingSet.set(skill.name, { ...skill, rank: i + 1, trendingScore: (10 - i) * 10 + (skill.score || 0) });
+      trendingMap.set(skill.name, { 
+        ...skill, 
+        rank: i + 1, 
+        trendingScore: (10 - i) * 10 + (skill.score || 0) 
+      });
     });
     
     rankings.github.forEach((skill, i) => {
-      if (!trendingSet.has(skill.name)) {
-        trendingSet.set(skill.name, { ...skill, rank: i + 1, trendingScore: (10 - i) * 5 + Math.log10(skill.stars + 1) * 10 });
+      if (!trendingMap.has(skill.name)) {
+        trendingMap.set(skill.name, { 
+          ...skill, 
+          rank: i + 1, 
+          trendingScore: (10 - i) * 5 + Math.log10((skill.stars || 0) + 1) * 10 
+        });
       }
     });
     
-    rankings.trending = Array.from(trendingSet.values())
+    rankings.trending = Array.from(trendingMap.values())
       .sort((a, b) => b.trendingScore - a.trendingScore)
       .slice(0, 10);
 
-    // Return requested source or all
     if (source !== 'all') {
       return Response.json({
         success: true,
