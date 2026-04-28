@@ -345,22 +345,37 @@ export default function Home() {
                     {filteredSkills.map((skill) => (
                       <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
+                          {skill.url ? (
+                            <a href={skill.url} target="_blank" rel="noopener noreferrer" style={{ margin: 0, fontSize: '16px', color: '#667eea', textDecoration: 'none' }}>
+                              {skill.name} ↗
+                            </a>
+                          ) : (
+                            <h3 style={{ margin: 0, fontSize: '16px', color: skill.install?.includes('内置') ? '#888' : '#667eea' }}>{skill.name}</h3>
+                          )}
                           <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
                             {getSourceLabel(skill.source)}
                           </span>
                         </div>
                         <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <button 
-                            onClick={() => copyToClipboard(getInstallCmd(skill))} 
-                            style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
-                          >
-                            📋 安装
-                          </button>
-                          <span style={{ fontSize: '10px', color: '#666' }}>
-                            {skill.source === 'workspace' ? 'cp -r' : skill.source === 'openclaw' ? 'cp -r' : skill.source === 'clawhub' ? 'clawdhub' : 'git clone'}
-                          </span>
+                          {skill.install ? (
+                            <button 
+                              onClick={() => copyToClipboard(skill.install)} 
+                              style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
+                              title={skill.install}
+                            >
+                              📋 复制命令
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '11px', color: '#666', padding: '6px 12px', background: '#2d2d4a', borderRadius: '4px' }}>
+                              内置技能
+                            </span>
+                          )}
+                          {skill.install && !skill.install.includes('内置') && (
+                            <span style={{ fontSize: '10px', color: '#666' }}>
+                              {skill.install.substring(0, 30)}{skill.install.length > 30 ? '...' : ''}
+                            </span>
+                          )}
                           {renderStars(skill.stars)}
                           {renderScore(skill.score)}
                         </div>
@@ -571,7 +586,13 @@ export default function Home() {
                     {i + 1}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
+                    {skill.url ? (
+                      <a href={skill.url} target="_blank" rel="noopener noreferrer" style={{ margin: 0, fontSize: '16px', color: '#667eea', textDecoration: 'none' }}>
+                        {skill.name} ↗
+                      </a>
+                    ) : (
+                      <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
+                    )}
                     <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#aaa' }}>{skill.desc || skill.name}</p>
                     {skill.category && (
                       <span style={{ fontSize: '10px', color: '#667eea', background: '#667eea20', padding: '2px 8px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>
@@ -583,14 +604,20 @@ export default function Home() {
                         ↑ {skill.installs.toLocaleString()}
                       </span>
                     )}
+                    {skill.install && !skill.install.includes('内置') && (
+                      <span style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '4px' }}>
+                        {skill.install}
+                      </span>
+                    )}
                   </div>
                   <div style={{ textAlign: 'right', minWidth: '80px' }}>
                     {renderStars(skill.stars)}
                     {renderScore(skill.score)}
                   </div>
                   <button 
-                    onClick={() => copyToClipboard(getInstallCmd(skill))} 
+                    onClick={() => copyToClipboard(skill.install || getInstallCmd(skill))} 
                     style={{ padding: '8px 16px', background: '#667eea', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '12px' }}
+                    title={skill.install || getInstallCmd(skill)}
                   >
                     📋
                   </button>
