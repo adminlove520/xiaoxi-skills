@@ -25,6 +25,7 @@ const LEADERBOARD_TABS = [
 export default function Home() {
   const [tab, setTab] = useState('browse');
   const [skills, setSkills] = useState([]);
+  const [user, setUser] = useState(null); // GitHub 用户信息
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -70,7 +71,46 @@ export default function Home() {
   // Fetch skills
   useEffect(() => {
     fetchSkills();
+    checkLoginStatus(); // 检查登录状态
   }, []);
+
+  // 检查登录状态
+  const checkLoginStatus = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/status`);
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+      }
+    } catch (e) {
+      console.error('Check login status failed:', e);
+    }
+  };
+
+  // GitHub 登录
+  const handleGitHubLogin = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`);
+      const data = await res.json();
+      if (data.success && data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        alert('GitHub OAuth 未配置或登录失败');
+      }
+    } catch (e) {
+      alert('登录失败: ' + e.message);
+    }
+  };
+
+  // 退出登录
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+      setUser(null);
+    } catch (e) {
+      console.error('Logout failed:', e);
+    }
+  };
 
   const fetchSkills = async () => {
     setLoading(true);
@@ -255,15 +295,39 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e0e0e0' }}>
       {/* Header */}
-      <header style={{ borderBottom: '1px solid #1a1a2e', padding: '24px 0', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '32px', margin: 0, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          🦞 xiaoxi-skills Hub
-        </h1>
-        <p style={{ color: '#888', marginTop: '8px' }}>
-          OpenClaw Skills 收藏库
-          {loading ? ' · 加载中...' : ` · ${skills.length} 个 Skills`}
-          {lastUpdated && <span style={{ fontSize: '11px', color: '#555', marginLeft: '8px' }}>· 更新于 {lastUpdated}</span>}
-        </p>
+      <header style={{ borderBottom: '1px solid #1a1a2e', padding: '16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', flex: 1 }}>
+          <h1 style={{ fontSize: '32px', margin: 0, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            🦞 xiaoxi-skills Hub
+          </h1>
+          <p style={{ color: '#888', marginTop: '8px' }}>
+            OpenClaw Skills 收藏库
+            {loading ? ' · 加载中...' : ` · ${skills.length} 个 Skills`}
+            {lastUpdated && <span style={{ fontSize: '11px', color: '#555', marginLeft: '8px' }}>· 更新于 {lastUpdated}</span>}
+          </p>
+        </div>
+        <div style={{ marginRight: '24px' }}>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img src={user.avatar_url} alt={user.login} style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
+              <span style={{ color: '#e0e0e0', fontSize: '14px' }}>{user.login}</span>
+              <button
+                onClick={handleLogout}
+                style={{ padding: '8px 16px', background: '#2d2d4a', border: 'none', borderRadius: '6px', color: '#e0e0e0', cursor: 'pointer', fontSize: '13px' }}
+              >
+                退出
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleGitHubLogin}
+              style={{ padding: '8px 16px', background: '#24292e', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.38-2.43-.98-2.43-.98-.29-.74-.71-.94-.71-.94-.73-.49.06-.48.06-.48.8.06 1.23.82 1.23.82.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              登录 GitHub
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Tabs */}

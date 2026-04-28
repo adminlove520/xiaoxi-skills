@@ -1,5 +1,7 @@
 // GitHub OAuth Callback API
-// 处理 GitHub OAuth 回调，交换 access_token
+// 处理 GitHub OAuth 回调，交换 access_token 并设置 cookie
+
+import { cookies } from 'next/headers';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -57,20 +59,17 @@ export async function GET(request) {
 
     const userData = await userRes.json();
 
-    // 返回 JSON 而不是直接重定向
-    // 前端会处理这个响应
-    return Response.json({
-      success: true,
-      user: {
-        login: userData.login,
-        name: userData.name,
-        avatar_url: userData.avatar_url,
-        html_url: userData.html_url
-      },
-      // 注意：实际应该通过 HttpOnly cookie 返回 token
-      // 这里为了简化，返回给前端自行处理
-      message: 'OAuth 登录成功'
+    // 设置 HttpOnly cookie
+    const cookieStore = await cookies();
+    cookieStore.set('github_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30 // 30 天
     });
+
+    // 返回首页（带上用户信息给前端）
+    return Response.redirect('/?login=success');
 
   } catch (e) {
     console.error('OAuth callback error:', e);
