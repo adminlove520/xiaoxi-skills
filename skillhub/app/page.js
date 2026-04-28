@@ -173,7 +173,13 @@ export default function Home() {
     if (skill.source === 'clawhub') {
       return `clawdhub install ${skill.name}`;
     }
-    if (skill.source === 'github' || skill.source === 'skillssh' || skill.url) {
+    if (skill.source === 'skillssh') {
+      if (skill.repo) {
+        return `npx skills@install ${skill.repo.split('/')[0]}/${skill.repo.split('/')[1]}/${skill.name}`;
+      }
+      return `npx skills@install ${skill.name}`;
+    }
+    if (skill.source === 'github' || skill.url) {
       if (skill.url) {
         const baseUrl = skill.url.replace('/blob/main', '').replace('github.com', 'github.com/');
         return `git clone ${baseUrl}`;
@@ -435,7 +441,7 @@ export default function Home() {
                         📋 安装
                       </button>
                       <span style={{ fontSize: '10px', color: '#666' }}>
-                        {skill.source === 'clawhub' ? 'clawdhub' : skill.source === 'github' || skill.source === 'skillssh' ? 'git clone' : 'clawdhub'}
+                        {skill.source === 'clawhub' ? 'clawdhub' : skill.source === 'github' ? 'git clone' : skill.source === 'skillssh' ? 'npx skills' : 'clawdhub'}
                       </span>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {renderStars(skill.stars)}
