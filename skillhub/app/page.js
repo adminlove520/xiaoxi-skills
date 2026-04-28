@@ -340,32 +340,60 @@ export default function Home() {
           {!loading && !error && (
             <>
               {filteredSkills.length > 0 ? (
-                <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                  {filteredSkills.map((skill) => (
-                    <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
-                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
-                          {getSourceLabel(skill.source)}
-                        </span>
+                <>
+                  <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                    {filteredSkills.map((skill) => (
+                      <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
+                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
+                            {getSourceLabel(skill.source)}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <button 
+                            onClick={() => copyToClipboard(getInstallCmd(skill))} 
+                            style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
+                          >
+                            📋 安装
+                          </button>
+                          <span style={{ fontSize: '10px', color: '#666' }}>
+                            {skill.source === 'workspace' ? 'cp -r' : skill.source === 'openclaw' ? 'cp -r' : skill.source === 'clawhub' ? 'clawdhub' : 'git clone'}
+                          </span>
+                          {renderStars(skill.stars)}
+                          {renderScore(skill.score)}
+                        </div>
                       </div>
-                      <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                        <button 
-                          onClick={() => copyToClipboard(getInstallCmd(skill))} 
-                          style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
-                        >
-                          📋 安装
-                        </button>
-                        <span style={{ fontSize: '10px', color: '#666' }}>
-                          {skill.source === 'workspace' ? 'cp -r' : skill.source === 'openclaw' ? 'cp -r' : skill.source === 'clawhub' ? 'clawdhub' : 'git clone'}
-                        </span>
-                        {renderStars(skill.stars)}
-                        {renderScore(skill.score)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  {/* More from source */}
+                  <div style={{ textAlign: 'center', padding: '24px 0 48px' }}>
+                    <button
+                      onClick={() => {
+                        const urls = {
+                          workspace: 'https://github.com/adminlove520/xiaoxi-skills',
+                          openclaw: 'https://github.com/openclaw/openclaw',
+                          clawhub: 'https://clawhub.com/explore',
+                          all: 'https://skills.sh'
+                        };
+                        window.open(urls[filter] || 'https://skills.sh', '_blank');
+                      }}
+                      style={{
+                        padding: '12px 32px',
+                        background: 'transparent',
+                        border: '1px solid #667eea',
+                        borderRadius: '8px',
+                        color: '#667eea',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      More from {filter === 'all' ? 'All Sources' : filter === 'workspace' ? 'Workspace' : filter === 'openclaw' ? 'OpenClaw' : filter === 'clawhub' ? 'ClawHub' : 'Browse'} →
+                    </button>
+                  </div>
+                </>
               ) : (
                 <div style={{ textAlign: 'center', padding: '64px 24px', color: '#666' }}>
                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
@@ -516,7 +544,7 @@ export default function Home() {
             <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px 48px' }}>
               {leaderboard[leaderboardTab].map((skill, i) => (
                 <div 
-                  key={skill.name} 
+                  key={`${skill.name}-${i}`} 
                   style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -550,6 +578,11 @@ export default function Home() {
                         {skill.category}
                       </span>
                     )}
+                    {skill.installs && (
+                      <span style={{ fontSize: '10px', color: '#48bb78', marginLeft: '8px' }}>
+                        ↑ {skill.installs.toLocaleString()}
+                      </span>
+                    )}
                   </div>
                   <div style={{ textAlign: 'right', minWidth: '80px' }}>
                     {renderStars(skill.stars)}
@@ -563,6 +596,33 @@ export default function Home() {
                   </button>
                 </div>
               ))}
+              
+              {/* More from source button */}
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <button
+                  onClick={() => {
+                    const urls = {
+                      trending: 'https://clawhub.com/explore',
+                      clawhub: 'https://clawhub.com/explore',
+                      github: 'https://github.com/search?q=openclaw+skill&type=repositories',
+                      skillssh: 'https://skills.sh'
+                    };
+                    window.open(urls[leaderboardTab] || 'https://skills.sh', '_blank');
+                  }}
+                  style={{
+                    padding: '12px 32px',
+                    background: 'transparent',
+                    border: '1px solid #667eea',
+                    borderRadius: '8px',
+                    color: '#667eea',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  More from {LEADERBOARD_TABS.find(t => t.key === leaderboardTab)?.label.replace(/[^a-zA-Z]/g, '') || 'source'} →
+                </button>
+              </div>
             </div>
           )}
 
