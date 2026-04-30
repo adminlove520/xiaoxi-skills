@@ -8,6 +8,7 @@ import { SOURCE_COLORS } from './components/constants';
 
 const API_BASE = '/api';
 
+// V2.2.1 - Clean build
 export default function Home() {
   const [tab, setTab] = useState('browse');
   const [skills, setSkills] = useState([]);
