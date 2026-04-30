@@ -36,7 +36,15 @@ export async function GET(request) {
   // 只从环境变量读取配置
   const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID?.trim().replace(/^\uFEFF/, '');
   const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET?.trim().replace(/^\uFEFF/, '');
+  let REDIRECT_URI = process.env.GITHUB_REDIRECT_URI?.trim().replace(/^\uFEFF/, '');
   
+  // 智能修正 Redirect URI
+  if (REDIRECT_URI && !REDIRECT_URI.includes('/api/auth/callback')) {
+    REDIRECT_URI = REDIRECT_URI.endsWith('/') 
+      ? REDIRECT_URI + 'api/auth/callback' 
+      : REDIRECT_URI + '/api/auth/callback';
+  }
+
   // 如果环境变量未配置，返回错误
   if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
     return Response.redirect(`${origin}/?auth_error=oauth_not_configured`);
@@ -54,7 +62,8 @@ export async function GET(request) {
         client_id: GITHUB_CLIENT_ID,
         client_secret: GITHUB_CLIENT_SECRET,
         code,
-        state
+        state,
+        redirect_uri: REDIRECT_URI
       })
     });
 
