@@ -21,11 +21,9 @@ export async function GET(request) {
   authUrl.searchParams.set('scope', 'repo:status read:user');
   authUrl.searchParams.set('state', state);
 
-  // 将 state 存入 cookie 以便回调时验证
-  const cookieHeader = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`;
-
-  const headers = new Headers();
-  headers.append('Set-Cookie', cookieHeader);
+  // 将 state 存入 cookie 以便回调时验证 (10分钟有效)
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookieHeader = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${isProd ? '; Secure' : ''}`;
 
   return new Response(JSON.stringify({
     success: true,

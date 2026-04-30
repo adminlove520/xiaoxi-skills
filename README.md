@@ -57,12 +57,19 @@ openclaw skills list
 bash scripts/sync.sh
 ```
 
-## 🌐 在线资源
+## 🌐 在线资源 & SkillHub 增强
 
 - **SkillHub**: https://xiaoxi-skills.vercel.app （浏览所有 Skills）
 - **GitHub**: https://github.com/adminlove520/xiaoxi-skills
 
+### 🚀 SkillHub 新功能
+SkillHub 现已支持开发者深度参与：
+- **GitHub 登录**: 快捷同步您的 GitHub 账号。
+- **PR 提交**: 支持在线编辑 Skill 并直接提交 Pull Request，简化贡献流程。
+- **动态发现**: 自动发现并索引包含 `SKILL.md` 的所有技能模块。
+
 ## 📝 CHANGELOG
 
+- 2026-04-30: 脚本升级，支持动态发现 SKILL.md，支持 -f 强制覆盖，SkillHub 增加 GitHub 登录和 PR 提交功能。
 - 2026-04-28: 新增 30 个 Skills，整理文档和安装脚本，添加 Vercel SkillHub
 - 2026-03-15: 初始化收藏库

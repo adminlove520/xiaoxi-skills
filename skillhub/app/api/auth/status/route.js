@@ -3,7 +3,7 @@
 
 export async function GET(request) {
   // 从 cookie 中读取 token
-  const token = request.cookies.get('github_token')?.value;
+  const token = request.cookies.get('gh_token')?.value;
   
   if (!token) {
     return Response.json({ success: false, user: null });

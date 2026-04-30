@@ -4,6 +4,15 @@
 
 set -e
 
+FORCE=false
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -f|--force) FORCE=true ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
 SKILLS_DIR="$HOME/.openclaw/skills"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -14,124 +23,45 @@ echo ""
 # 创建目标目录
 mkdir -p "$SKILLS_DIR"
 
-# Skills 需要从 workspace/openclaw 复制
-CP_SKILLS=(
-    "agent-reach"
-    "auto-monitor"
-    "autocli"
-    "building-agentskills"
-    "clawhub"
-    "clawteam"
-    "coding-agent"
-    "coding-delegate-agent"
-    "dna-memory"
-    "find-skills"
-    "gh-issues"
-    "healthcheck"
-    "hermes-agent"
-    "holographic-memory"
-    "lyric-sense"
-    "memory-curator"
-    "minimax-docx"
-    "minimax-pdf"
-    "minimax-xlsx"
-    "movie-subtitle-viewer"
-    "openclaw-evolution"
-    "openclaw-plugin-sdk-migration"
-    "openclaw-pr-maintainer"
-    "scrapling-official"
-    "self-health-monitor"
-    "summarize"
-    "taskflow"
-    "taskflow-inbox-triage"
-)
+echo "🔍 正在从仓库发现 Skills..."
 
-# 从 repo 复制其他 skills
-REPO_SKILLS=(
-    "avatar-helper"
-    "chrome-cdp"
-    "clawbot-market"
-    "clawbridge"
-    "clawfeed"
-    "clawpi-redpacket-monitor"
-    "cognitive-memory"
-    "companion-lobster"
-    "create-agent-skills"
-    "cross-bot-communication"
-    "elite-longterm-memory"
-    "epro-memory"
-    "fabric"
-    "files"
-    "gateway-watchdog-xiaoxi"
-    "gogcli"
-    "lobster-cultivation"
-    "memu"
-    "multi-search-engine"
-    "myclaw-backup"
-    "newsnow"
-    "obsidian"
-    "openclaw-auto-updater"
-    "openclaw-qa"
-    "openclaw-tavily-search"
-    "pentest-learning-skill"
-    "pinchtab-helper"
-    "planning-with-files"
-    "powerpoint-pptx"
-    "pptx-generator"
-    "pr-review"
-    "proactive-solvr"
-    "self-driven"
-    "self-improving"
-    "self-improving-agent"
-    "self-reflection"
-    "skill-creator"
-    "stealth-browser"
-    "superpowers"
-    "tavily"
-    "web-deploy-github"
-    "x-tweet-fetcher"
-)
-
-echo "📦 安装 CP_SKILLS ($(echo ${#CP_SKILLS[@]}))..."
-for skill in "${CP_SKILLS[@]}"; do
-    src=""
-    if [ -d "$HOME/.openclaw/workspace/skills/$skill" ]; then
-        src="$HOME/.openclaw/workspace/skills/$skill"
-    elif [ -d "$HOME/.openclaw/skills/$skill" ]; then
-        src="$HOME/.openclaw/skills/$skill"
-    elif [ -d "$REPO_DIR/$skill" ]; then
-        src="$REPO_DIR/$skill"
+# 动态发现包含 SKILL.md 的目录
+# 优先级：workspace > openclaw > agents > root
+get_priority() {
+    if [[ "$1" == *"/workspace/"* ]]; then echo 1
+    elif [[ "$1" == *"/openclaw/"* ]]; then echo 2
+    elif [[ "$1" == *"/agents/"* ]]; then echo 3
+    else echo 4
     fi
+}
+
+# 搜集所有包含 SKILL.md 的目录，按优先级从低到高排序
+sorted_paths=$(find "$REPO_DIR" -name "SKILL.md" -not -path '*/.*' -exec dirname {} \; | while read -r p; do
+    echo "$(get_priority "$p") $p"
+done | sort -r | cut -d' ' -f2-)
+
+for skill_path in $sorted_paths; do
+    # 排除 repo 根目录
+    if [ "$skill_path" == "$REPO_DIR" ]; then continue; fi
     
-    if [ -n "$src" ]; then
-        if [ -d "$SKILLS_DIR/$skill" ]; then
-            echo "  ⏭️  跳过 $skill (已存在)"
+    skill_name=$(basename "$skill_path")
+    dest="$SKILLS_DIR/$skill_name"
+    
+    if [ -d "$dest" ]; then
+        if [ "$FORCE" = true ]; then
+            rm -rf "$dest"
+            cp -r "$skill_path" "$dest"
+            echo "  🔄 覆盖 $skill_name"
         else
-            cp -r "$src" "$SKILLS_DIR/$skill"
-            echo "  ✅ $skill"
+            echo "  ⏭️  跳过 $skill_name (已存在)"
         fi
     else
-        echo "  ⚠️  未找到 $skill"
-    fi
-done
-
-echo ""
-echo "📦 安装 REPO_SKILLS ($(echo ${#REPO_SKILLS[@]}))..."
-for skill in "${REPO_SKILLS[@]}"; do
-    src="$REPO_DIR/$skill"
-    if [ -d "$src" ]; then
-        if [ -d "$SKILLS_DIR/$skill" ]; then
-            echo "  ⏭️  跳过 $skill (已存在)"
-        else
-            cp -r "$src" "$SKILLS_DIR/$skill"
-            echo "  ✅ $skill"
-        fi
-    else
-        echo "  ⚠️  未找到 $skill"
+        cp -r "$skill_path" "$dest"
+        echo "  ✅ $skill_name"
     fi
 done
 
 echo ""
 echo "🎉 安装完成!"
 echo "📂 Skills 目录: $SKILLS_DIR"
-echo "📊 已安装: $(ls -1 "$SKILLS_DIR" | wc -l) 个"
+echo "📊 已安装: $(ls -1 "$SKILLS_DIR" 2>/dev/null | wc -l) 个"

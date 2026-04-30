@@ -4,7 +4,12 @@
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { skillName, skillDesc, skillContent, githubToken, submitterName, submitterEmail } = body;
+    let { skillName, skillDesc, skillContent, githubToken, submitterName, submitterEmail } = body;
+
+    // 如果 body 中没有 token，尝试从 cookie 中读取
+    if (!githubToken) {
+      githubToken = request.cookies.get('gh_token')?.value;
+    }
 
     // 验证必需字段
     if (!skillName?.trim()) {
@@ -55,23 +60,40 @@ export async function POST(request) {
       'Content-Type': 'application/json'
     };
 
-    // 1. 获取仓库信息
+    // 1. 检查 Skill 是否已存在
+    const checkRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/skills/${skillName}`, { headers });
+    if (checkRes.ok) {
+      return Response.json({ 
+        success: false, 
+        error: `Skill "${skillName}" 已存在。请尝试使用不同的名称，或直接在 GitHub 上提交 PR 进行修改。` 
+      }, { status: 400 });
+    }
+
+    // 2. 获取仓库信息 (获取默认分支)
     const repoRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`, { headers });
     if (!repoRes.ok) {
-      return Response.json({ success: false, error: '无法访问仓库，请检查 Token 权限' }, { status: 401 });
+      const errorData = await repoRes.json().catch(() => ({}));
+      return Response.json({ 
+        success: false, 
+        error: `无法访问 GitHub 仓库: ${errorData.message || repoRes.statusText}。请检查 Token 是否有效且具有 repo 权限。` 
+      }, { status: repoRes.status });
     }
     const repoData = await repoRes.json();
     const defaultBranch = repoData.default_branch;
 
-    // 2. 获取最新 commit SHA
+    // 3. 获取最新 commit SHA
     const refRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/${defaultBranch}`, { headers });
     if (!refRes.ok) {
-      return Response.json({ success: false, error: '无法获取仓库信息' }, { status: 500 });
+      const errorData = await refRes.json().catch(() => ({}));
+      return Response.json({ 
+        success: false, 
+        error: `获取主分支信息失败: ${errorData.message || refRes.statusText}` 
+      }, { status: 500 });
     }
     const refData = await refRes.json();
     const latestSha = refData.object.sha;
 
-    // 3. 创建新分支
+    // 4. 创建新分支
     const branchRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/refs`, {
       method: 'POST',
       headers,
@@ -81,10 +103,14 @@ export async function POST(request) {
       })
     });
     if (!branchRes.ok) {
-      return Response.json({ success: false, error: '无法创建分支' }, { status: 500 });
+      const errorData = await branchRes.json().catch(() => ({}));
+      return Response.json({ 
+        success: false, 
+        error: `创建分支失败: ${errorData.message || branchRes.statusText}` 
+      }, { status: 500 });
     }
 
-    // 4. 创建 Skill 目录和文件
+    // 5. 创建 Skill 目录和文件
     const skillDir = `skills/${skillName}`;
     const fileContent = Buffer.from(skillContent).toString('base64');
 
@@ -99,14 +125,14 @@ export async function POST(request) {
     });
 
     if (!fileRes.ok) {
-      const errorData = await fileRes.json();
+      const errorData = await fileRes.json().catch(() => ({}));
       return Response.json({ 
         success: false, 
-        error: `无法创建文件: ${errorData.message}` 
+        error: `无法创建文件: ${errorData.message || fileRes.statusText}` 
       }, { status: 500 });
     }
 
-    // 5. 创建 Pull Request
+    // 6. 创建 Pull Request
     const prRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/pulls`, {
       method: 'POST',
       headers,
@@ -119,10 +145,10 @@ export async function POST(request) {
     });
 
     if (!prRes.ok) {
-      const errorData = await prRes.json();
+      const errorData = await prRes.json().catch(() => ({}));
       return Response.json({ 
         success: false, 
-        error: `无法创建 PR: ${errorData.message}` 
+        error: `无法创建 PR: ${errorData.message || prRes.statusText}` 
       }, { status: 500 });
     }
 

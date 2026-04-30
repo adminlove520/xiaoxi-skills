@@ -7,8 +7,21 @@ export async function GET(request) {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
-  // 获取 origin
-  const origin = request.headers.get('origin') || 'https://skillhub-eight.vercel.app';
+  // 获取 host 和 protocol 来动态构建 origin
+  const host = request.headers.get('host');
+  const protocol = request.headers.get('x-forwarded-proto') || (host && host.includes('localhost') ? 'http' : 'https');
+  const origin = host ? `${protocol}://${host}` : 'https://skillhub-eight.vercel.app';
+
+  // 验证 state (防止 CSRF)
+  const cookieHeader = request.headers.get('cookie') || '';
+  const oauthStateCookie = cookieHeader.split(';')
+    .find(c => c.trim().startsWith('oauth_state='))
+    ?.split('=')[1]?.trim();
+
+  if (!state || state !== oauthStateCookie) {
+    console.error('State mismatch:', { received: state, expected: oauthStateCookie });
+    return Response.redirect(`${origin}/?auth_error=state_mismatch`);
+  }
 
   // 如果用户拒绝授权
   if (error) {
@@ -64,11 +77,14 @@ export async function GET(request) {
 
     const userData = await userRes.json();
 
-    // 设置 HttpOnly cookie (7天过期)
-    const cookieHeader = `gh_token=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
+    // 设置 HttpOnly cookie (7天过期) 并清除 oauth_state
+    const isProd = process.env.NODE_ENV === 'production';
+    const tokenCookie = `gh_token=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}${isProd ? '; Secure' : ''}`;
+    const clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isProd ? '; Secure' : ''}`;
     
     const headers = new Headers();
-    headers.append('Set-Cookie', cookieHeader);
+    headers.append('Set-Cookie', tokenCookie);
+    headers.append('Set-Cookie', clearStateCookie);
     headers.append('Location', `${origin}/?login_success=1`);
 
     return new Response(null, {
