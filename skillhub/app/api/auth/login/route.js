@@ -2,9 +2,8 @@
 // 触发 GitHub OAuth 登录流程
 
 export async function GET(request) {
-  // 从 Vercel 环境变量 或 本地 fallback 获取配置
-  // 只从环境变量读取配置
-  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID?.trim().replace(/^\uFEFF/, '');
+  // 彻底清理 Client ID 和 Redirect URI 中的不可见字符（如 UTF-8 BOM）
+  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID?.replace(/[^a-zA-Z0-9]/g, '');
   let REDIRECT_URI = process.env.GITHUB_REDIRECT_URI?.trim().replace(/^\uFEFF/, '');
   
   // 智能修正 Redirect URI
