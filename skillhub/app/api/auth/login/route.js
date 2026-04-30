@@ -23,9 +23,21 @@ export async function GET(request) {
   authUrl.searchParams.set('scope', 'repo:status read:user');
   authUrl.searchParams.set('state', state);
 
-  return Response.json({
+  // 将 state 存入 cookie 以便回调时验证
+  const cookieHeader = `oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`;
+
+  const headers = new Headers();
+  headers.append('Set-Cookie', cookieHeader);
+
+  return new Response(JSON.stringify({
     success: true,
     authUrl: authUrl.toString(),
     state
+  }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': cookieHeader
+    }
   });
 }
