@@ -7,6 +7,8 @@ const API_BASE = '/api';
 
 // ============ WORKSPACE Skills ============
 // 路径: /root/.openclaw/workspace/skills/
+// ============ WORKSPACE Skills ============
+// 路径: /root/.openclaw/workspace/skills/
 const WORKSPACE_SKILLS = [
   { name: 'agent-reach', desc: '全平台接入 - Twitter/X, Reddit, YouTube, GitHub, Bilibili, 小红书, 抖音等17+平台' },
   { name: 'avatar-helper', desc: '头像助手 - 帮助生成和管理头像' },
@@ -83,12 +85,32 @@ const OPENCLAW_SKILLS = [
   { name: 'taskflow', desc: '任务流编排 - 多步骤 detached 任务协调' },
 ];
 
+// ============ AGENTS Skills ============
+// 路径: /root/.agents/skills/
+const AGENTS_SKILLS = [
+  { name: 'agent-reach', desc: '全平台接入 - Twitter/X, Reddit, YouTube, GitHub, Bilibili 等17+平台' },
+  { name: 'autocli', desc: '55+ 社交/内容网站 CLI (HackerNews, Reddit, Twitter/X, Bilibili等)' },
+  { name: 'clawhub', desc: 'ClawHub CLI - 搜索安装更新同步发布 skills' },
+  { name: 'coding-agent', desc: '委托编码任务给 Codex/Claude Code/OpenCode/Pi agents' },
+  { name: 'find-skills', desc: '技能发现 - 搜索和安装 agent skills' },
+  { name: 'fluxa-agent-wallet', desc: 'FluxA Agent 钱包 - x402支付/USDC转账/支付链接' },
+  { name: 'gh-issues', desc: 'GitHub Issues 管理 - 获取/委托修复/打开 PR/审查' },
+  { name: 'healthcheck', desc: '安全检查 - SSH/防火墙/更新/暴露/cron/风险态势' },
+  { name: 'openclaw-pr-maintainer', desc: 'PR 维护 - 审查/分类/关闭/评论/合并 PRs' },
+  { name: 'skill-creator', desc: '技能创建 - 创建/编辑/改进/整理 SKILL.md 文件' },
+  { name: 'summarize', desc: '文本摘要 - 总结/转录 URLs/YouTube/播客/文章/PDF' },
+  { name: 'taskflow-inbox-triage', desc: '任务流收件箱分类 - 意图路由+等待回复+汇总' },
+  { name: 'taskflow', desc: '任务流编排 - 多步骤 detached 任务协调' },
+];
+
 // ============ 安装命令 ============
 const SKILL_SOURCES = {
   // WORKSPACE skills - 源路径
   workspace: '/root/.openclaw/workspace/skills',
   // OPENCLAW skills - 源路径
   openclaw: '/root/.openclaw/skills',
+  // AGENTS skills - 源路径
+  agents: '/root/.agents/skills',
 };
 
 // 生成带安装命令的完整列表
@@ -96,21 +118,23 @@ function buildSkillList(source, skills) {
   return skills.map(s => ({
     ...s,
     source,
-    install: `cp -r ${SKILL_SOURCES[source]}/${s.name} ~/.openclaw/skills/`,
-    url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/${s.name}`
+    install: `cp -r ~/.openclaw/xiaoxi-skills/${source}/${s.name} ~/.openclaw/skills/`,
+    url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/${source}/${s.name}`
   }));
 }
 
 const ALL_SKILLS = [
   ...buildSkillList('workspace', WORKSPACE_SKILLS),
   ...buildSkillList('openclaw', OPENCLAW_SKILLS),
+  ...buildSkillList('agents', AGENTS_SKILLS),
 ];
 
 const STATS = {
   workspace: WORKSPACE_SKILLS.length,
   openclaw: OPENCLAW_SKILLS.length,
+  agents: AGENTS_SKILLS.length,
   total: ALL_SKILLS.length
 };
 
-export { WORKSPACE_SKILLS, OPENCLAW_SKILLS, ALL_SKILLS, STATS, API_BASE };
+export { WORKSPACE_SKILLS, OPENCLAW_SKILLS, AGENTS_SKILLS, ALL_SKILLS, STATS, API_BASE };
 export default ALL_SKILLS;
