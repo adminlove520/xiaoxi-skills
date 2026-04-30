@@ -4,7 +4,7 @@
 export async function GET(request) {
   // 彻底清理 Client ID 和 Redirect URI 中的不可见字符（如 UTF-8 BOM）
   const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID?.replace(/[^a-zA-Z0-9]/g, '');
-  let REDIRECT_URI = process.env.GITHUB_REDIRECT_URI?.trim().replace(/^\uFEFF/, '');
+  let REDIRECT_URI = process.env.GITHUB_REDIRECT_URI?.replace(/[\s\uFEFF\u200B-\u200D]/g, '');
   
   // 智能修正 Redirect URI
   if (REDIRECT_URI && !REDIRECT_URI.includes('/api/auth/callback')) {
