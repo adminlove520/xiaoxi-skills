@@ -34,8 +34,8 @@ export async function GET(request) {
 
   // 从 Vercel 环境变量 或 本地 fallback 获取配置
   // 只从环境变量读取配置
-  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-  const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID?.trim().replace(/^\uFEFF/, '');
+  const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET?.trim().replace(/^\uFEFF/, '');
   
   // 如果环境变量未配置，返回错误
   if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
