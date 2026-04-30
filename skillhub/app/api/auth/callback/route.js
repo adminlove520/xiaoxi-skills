@@ -15,8 +15,9 @@ export async function GET(request) {
   // 验证 state (防止 CSRF)
   const cookieHeader = request.headers.get('cookie') || '';
   const oauthStateCookie = cookieHeader.split(';')
-    .find(c => c.trim().startsWith('oauth_state='))
-    ?.split('=')[1]?.trim();
+    .map(c => c.trim())
+    .find(c => c.startsWith('oauth_state='))
+    ?.substring('oauth_state='.length);
 
   if (!state || state !== oauthStateCookie) {
     console.error('State mismatch:', { received: state, expected: oauthStateCookie });
@@ -33,10 +34,13 @@ export async function GET(request) {
   }
 
   // 从 Vercel 环境变量 或 本地 fallback 获取配置
-  // 只从环境变量读取配置
-  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID?.trim().replace(/^\uFEFF/, '');
+  // 增加纠错逻辑：处理 1 vs l 的常见拼写错误
+  let GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID?.replace(/[^a-zA-Z0-9]/g, '');
+  if (GITHUB_CLIENT_ID === 'Ov231i1LWbTWxKhRMR38') {
+    GITHUB_CLIENT_ID = 'Ov23li1LWbTWxKhRMR38';
+  }
   const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET?.trim().replace(/^\uFEFF/, '');
-  let REDIRECT_URI = process.env.GITHUB_REDIRECT_URI?.trim().replace(/^\uFEFF/, '');
+  let REDIRECT_URI = process.env.GITHUB_REDIRECT_URI?.replace(/[\s\uFEFF\u200B-\u200D]/g, '');
   
   // 智能修正 Redirect URI
   if (REDIRECT_URI && !REDIRECT_URI.includes('/api/auth/callback')) {
