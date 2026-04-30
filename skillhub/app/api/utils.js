@@ -44,8 +44,8 @@ export function getLocalSkills() {
               name: skillName,
               desc: desc,
               source: cat,
-              install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/${cat}/${skillName} ~/.openclaw/skills/`,
-              url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/${cat}/${skillName}`
+              install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/skillhub/data/${cat}/${skillName} ~/.openclaw/skills/`,
+              url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/skillhub/data/${cat}/${skillName}`
             });
           }
         });
