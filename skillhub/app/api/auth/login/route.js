@@ -19,8 +19,10 @@ export async function GET(request) {
     return Response.json({ success: false, error: 'OAuth not configured' }, { status: 500 });
   }
 
-  // 生成随机 state 用于 CSRF 防护
-  const state = Math.random().toString(36).substring(7);
+  // 生成随机 state 用于 CSRF 防护，并可选带上 return_to
+  const { searchParams } = new URL(request.url);
+  const next = searchParams.get('next') || '/';
+  const state = Math.random().toString(36).substring(7) + '|' + Buffer.from(next).toString('base64');
   
   const authUrl = new URL('https://github.com/login/oauth/authorize');
   authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);

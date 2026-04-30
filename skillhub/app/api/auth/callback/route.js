@@ -91,10 +91,21 @@ export async function GET(request) {
     const tokenCookie = `gh_token=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}${isProd ? '; Secure' : ''}`;
     const clearStateCookie = `oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isProd ? '; Secure' : ''}`;
     
+    // 解析 state 中的 return_to
+    let returnPath = '/';
+    if (state && state.includes('|')) {
+      try {
+        const base64Part = state.split('|')[1];
+        returnPath = Buffer.from(base64Part, 'base64').toString();
+      } catch (e) {
+        console.warn('Failed to parse return_to from state');
+      }
+    }
+
     const headers = new Headers();
     headers.append('Set-Cookie', tokenCookie);
     headers.append('Set-Cookie', clearStateCookie);
-    headers.append('Location', `${origin}/?login_success=1`);
+    headers.append('Location', `${origin}${returnPath}${returnPath.includes('?') ? '&' : '?'}login_success=1`);
 
     return new Response(null, {
       status: 302,

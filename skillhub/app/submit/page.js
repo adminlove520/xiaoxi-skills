@@ -179,36 +179,59 @@ export default function SubmitPage() {
         </div>
 
         {/* Action Bar */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-          <button 
-            onClick={() => { setShowImport(true); if (repos.length === 0) fetchRepos(); }}
-            disabled={!user}
-            style={{ 
-              flex: 1, 
-              padding: '12px', 
-              background: '#24292e', 
-              color: '#fff', 
-              border: '1px solid #2d2d4a', 
-              borderRadius: '8px', 
-              cursor: user ? 'pointer' : 'not-allowed',
-              opacity: user ? 1 : 0.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              fontWeight: '600'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.38-2.43-.98-2.43-.98-.29-.74-.71-.94-.71-.94-.73-.49.06-.48.06-.48.8.06 1.23.82 1.23.82.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-            从 GitHub 导入
-          </button>
-          {!user && (
-            <a href="/api/auth/login" style={{ flex: 1, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#48bb78', color: '#fff', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>
-              登录以使用 GitHub 导入
+        {!user && !loadingUser && (
+          <div style={{ background: '#161625', padding: '32px', borderRadius: '16px', border: '1px solid #ed893630', textAlign: 'center', marginBottom: '32px' }}>
+            <h3 style={{ margin: '0 0 12px', color: '#ed8936' }}>需要 GitHub 授权</h3>
+            <p style={{ color: '#888', marginBottom: '24px', fontSize: '14px' }}>登录后即可一键从你的 GitHub 仓库导入 SKILL.md，并自动提交 Pull Request。</p>
+            <a 
+              href="/api/auth/login?next=/submit" 
+              style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                background: '#48bb78', 
+                color: '#fff', 
+                padding: '12px 32px', 
+                borderRadius: '8px', 
+                textDecoration: 'none', 
+                fontWeight: '700',
+                boxShadow: '0 4px 12px rgba(72,187,120,0.3)'
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.38-2.43-.98-2.43-.98-.29-.74-.71-.94-.71-.94-.73-.49.06-.48.06-.48.8.06 1.23.82 1.23.82.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              立即登录
             </a>
-          )}
-        </div>
+          </div>
+        )}
+
+        {user && (
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+            <button 
+              onClick={() => { setShowImport(true); if (repos.length === 0) fetchRepos(); }}
+              style={{ 
+                flex: 1, 
+                padding: '12px', 
+                background: '#24292e', 
+                color: '#fff', 
+                border: '1px solid #2d2d4a', 
+                borderRadius: '8px', 
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#2f363d'}
+              onMouseOut={e => e.currentTarget.style.background = '#24292e'}
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.38-2.43-.98-2.43-.98-.29-.74-.71-.94-.71-.94-.73-.49.06-.48.06-.48.8.06 1.23.82 1.23.82.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              从 GitHub 仓库导入
+            </button>
+          </div>
+        )}
 
         {/* GitHub Import Modal */}
         {showImport && (
