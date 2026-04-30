@@ -1,79 +1,30 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import SkillCard from './components/SkillCard';
+import Leaderboard from './components/Leaderboard';
+import DiscoverSection from './components/DiscoverSection';
+import SkillDetailModal from './components/SkillDetailModal';
+import { SOURCE_COLORS } from './components/constants';
 
 const API_BASE = '/api';
-
-// 分类颜色映射
-const SOURCE_COLORS = {
-  workspace: { bg: '#48bb7820', color: '#48bb78', label: 'Local' },
-  openclaw: { bg: '#ed893620', color: '#ed8936', label: 'OpenClaw' },
-  clawhub: { bg: '#667eea20', color: '#667eea', label: 'ClawHub' },
-  repo: { bg: '#38b2ac20', color: '#38b2ac', label: 'Repo' },
-  github: { bg: '#48bb7820', color: '#48bb78', label: 'GitHub' },
-  skillssh: { bg: '#f6c90e20', color: '#f6c90e', label: 'skill.sh' }
-};
-
-// Leaderboard 子Tab配置
-const LEADERBOARD_TABS = [
-  { key: 'trending', label: '🔥 综合趋势', color: '#667eea' },
-  { key: 'github', label: '★ GitHub Top10', color: '#48bb78' },
-  { key: 'clawhub', label: '⚡ ClawHub 推荐', color: '#ed8936' },
-  { key: 'skillssh', label: '🔧 skill.sh 精选', color: '#f6c90e' }
-];
 
 export default function Home() {
   const [tab, setTab] = useState('browse');
   const [skills, setSkills] = useState([]);
-  const [user, setUser] = useState(null); // GitHub 用户信息
+  const [user, setUser] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
   
-  // Detail Modal state
   const [detailSkill, setDetailSkill] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
-  
-  // Discover state
-  const [discoverQuery, setDiscoverQuery] = useState('');
-  const [discoverSource, setDiscoverSource] = useState('all');
-  const [discoverResults, setDiscoverResults] = useState([]);
-  const [discovering, setDiscovering] = useState(false);
-  const [discoverError, setDiscoverError] = useState(null);
-  
-  // Leaderboard state
-  const [leaderboard, setLeaderboard] = useState({
-    trending: [],
-    github: [],
-    clawhub: [],
-    skillssh: []
-  });
-  const [leaderboardTab, setLeaderboardTab] = useState('trending');
-  const [leaderboardLoading, setLeaderboardLoading] = useState({
-    trending: false,
-    github: false,
-    clawhub: false,
-    skillssh: false
-  });
-  const [leaderboardError, setLeaderboardError] = useState({
-    trending: null,
-    github: null,
-    clawhub: null,
-    skillssh: null
-  });
-  const [boardNote, setBoardNote] = useState(null);
 
-  // 使用 ref 跟踪已加载的数据源，避免闭包问题
-  const loadedSources = useRef(new Set());
-
-  // Fetch skills
   useEffect(() => {
     fetchSkills();
-    checkLoginStatus(); // 检查登录状态
+    checkLoginStatus();
   }, []);
 
-  // 检查登录状态
   const checkLoginStatus = async () => {
     try {
       const res = await fetch(`${API_BASE}/auth/status`);
@@ -86,804 +37,185 @@ export default function Home() {
     }
   };
 
-  // GitHub 登录
-  const handleGitHubLogin = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`);
-      const data = await res.json();
-      if (data.success && data.authUrl) {
-        window.location.href = data.authUrl;
-      } else {
-        alert('GitHub OAuth 未配置或登录失败');
-      }
-    } catch (e) {
-      alert('登录失败: ' + e.message);
-    }
-  };
-
-  // 退出登录
-  const handleLogout = async () => {
-    try {
-      await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
-      setUser(null);
-    } catch (e) {
-      console.error('Logout failed:', e);
-    }
-  };
-
   const fetchSkills = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const res = await fetch(`${API_BASE}/skills`, { 
-        signal: AbortSignal.timeout(10000)
-      });
+      const res = await fetch(`${API_BASE}/skills`);
       const data = await res.json();
       if (data.success) {
         setSkills(data.skills);
-        setLastUpdated(new Date().toLocaleTimeString('zh-CN'));
       } else {
-        setError(data.error || '加载失败');
+        setError(data.error);
       }
     } catch (e) {
-      setError(e.name === 'TimeoutError' ? '请求超时，请检查网络连接' : e.message);
+      setError(e.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDiscover = async (e) => {
-    e?.preventDefault();
-    if (!discoverQuery.trim()) return;
-    
-    setDiscovering(true);
-    setDiscoverError(null);
-    setDiscoverResults([]);
-    try {
-      const res = await fetch(
-        `${API_BASE}/discover?q=${encodeURIComponent(discoverQuery)}&source=${discoverSource}`,
-        { signal: AbortSignal.timeout(15000) }
-      );
-      const data = await res.json();
-      if (data.success) {
-        setDiscoverResults(data.results);
-        if (data.results.length === 0) {
-          setDiscoverError('没有找到相关 Skills，试试其他关键词');
-        }
-      } else {
-        setDiscoverError(data.error || '搜索失败');
-      }
-    } catch (e) {
-      setDiscoverError(e.name === 'TimeoutError' ? '请求超时' : e.message);
-    } finally {
-      setDiscovering(false);
-    }
-  };
-
-  // 按需加载单个 leaderboard 数据源 - 不依赖外部状态
-  const fetchLeaderboardSource = useCallback(async (source) => {
-    // 使用 ref 检查是否已加载，避免闭包问题
-    if (loadedSources.current.has(source) && leaderboard[source]?.length > 0) {
-      return;
-    }
-
-    setLeaderboardLoading(prev => ({ ...prev, [source]: true }));
-    setLeaderboardError(prev => ({ ...prev, [source]: null }));
-
-    try {
-      const res = await fetch(`${API_BASE}/leaderboard?source=${source}`, { 
-        signal: AbortSignal.timeout(15000) 
-      });
-      const data = await res.json();
-      
-      if (data.success) {
-        setLeaderboard(prev => {
-          const newData = data.rankings || [];
-          // 更新 ref
-          if (newData.length > 0) {
-            loadedSources.current.add(source);
-          }
-          return {
-            ...prev,
-            [source]: newData
-          };
-        });
-        if (data.note) setBoardNote(data.note);
-      } else {
-        setLeaderboardError(prev => ({ ...prev, [source]: data.error || '加载失败' }));
-      }
-    } catch (e) {
-      const errorMsg = e.name === 'TimeoutError' ? '请求超时' : e.message;
-      setLeaderboardError(prev => ({ ...prev, [source]: errorMsg }));
-    } finally {
-      setLeaderboardLoading(prev => ({ ...prev, [source]: false }));
-    }
-  }, []); // 空依赖数组，不依赖外部状态
-
-  // 当 Tab 切换到 leaderboard 时，加载当前选中的数据源
-  useEffect(() => {
-    if (tab === 'leaderboard') {
-      fetchLeaderboardSource(leaderboardTab);
-    }
-  }, [tab, leaderboardTab, fetchLeaderboardSource]);
-
-  const getInstallCmd = (skill) => {
-    if (skill.source === 'workspace') {
-      return `cp -r ~/.openclaw/workspace/skills/${skill.name} ~/.openclaw/skills/`;
-    }
-    if (skill.source === 'openclaw') {
-      return `cp -r ~/.openclaw/skills/${skill.name} ~/.openclaw/skills/`;
-    }
-    if (skill.source === 'clawhub') {
-      return `clawdhub install ${skill.name}`;
-    }
-    if (skill.source === 'skillssh') {
-      if (skill.repo) {
-        return `npx skills@install ${skill.repo.split('/')[0]}/${skill.repo.split('/')[1]}/${skill.name}`;
-      }
-      return `npx skills@install ${skill.name}`;
-    }
-    if (skill.source === 'github' || skill.url) {
-      if (skill.url) {
-        const baseUrl = skill.url.replace('/blob/main', '').replace('github.com', 'github.com/');
-        return `git clone ${baseUrl}`;
-      }
-      if (skill.repo) {
-        return `git clone https://github.com/${skill.repo}`;
-      }
-      return `clawdhub install ${skill.name}`;
-    }
-    return `clawdhub install ${skill.name}`;
+  const handleLogout = async () => {
+    await fetch(`${API_BASE}/auth/logout`);
+    setUser(null);
   };
 
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text);
+    alert('命令已复制到剪贴板！');
   };
 
   const filteredSkills = skills.filter(s => {
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
-                       (s.desc && s.desc.toLowerCase().includes(search.toLowerCase()));
     const matchFilter = filter === 'all' || s.source === filter;
-    return matchSearch && matchFilter;
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
+                       s.desc.toLowerCase().includes(search.toLowerCase());
+    return matchFilter && matchSearch;
   });
 
-  const getSourceStyle = (source) => {
-    const style = SOURCE_COLORS[source] || SOURCE_COLORS.repo;
-    return { background: style.bg, color: style.color };
-  };
-
-  const getSourceLabel = (source) => {
-    return SOURCE_COLORS[source]?.label || source;
-  };
-
-  const renderStars = (count) => {
-    if (!count) return null;
-    return <span style={{ color: '#f6c90e' }}>★ {count.toLocaleString()}</span>;
-  };
-
-  const renderScore = (score) => {
-    if (!score) return null;
-    return <span style={{ color: '#667eea' }}>⚡ {typeof score === 'number' ? score.toFixed(2) : score}</span>;
-  };
-
-  const stats = [
-    { key: 'all', label: '全部', color: '#667eea', count: skills.length },
-    { key: 'workspace', label: 'Local', color: '#48bb78', count: skills.filter(s => s.source === 'workspace').length },
-    { key: 'openclaw', label: 'OpenClaw', color: '#ed8936', count: skills.filter(s => s.source === 'openclaw').length }
-  ];
-
-  // 重试函数
-  const retryLeaderboard = (source) => {
-    loadedSources.current.delete(source);
-    fetchLeaderboardSource(source);
-  };
-
-  // 打开详情弹窗
-  const openDetail = (skill) => {
-    setDetailSkill(skill);
-    setShowDetail(true);
-  };
-
-  // 关闭详情弹窗
-  const closeDetail = () => {
-    setShowDetail(false);
-    setTimeout(() => setDetailSkill(null), 200);
-  };
-
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e0e0e0' }}>
+    <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e0e0e0', fontFamily: 'Inter, system-ui, sans-serif' }}>
       {/* Header */}
-      <header style={{ borderBottom: '1px solid #1a1a2e', padding: '16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ textAlign: 'center', flex: 1 }}>
-          <h1 style={{ fontSize: '32px', margin: 0, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            🦞 xiaoxi-skills Hub
-          </h1>
-          <p style={{ color: '#888', marginTop: '8px' }}>
-            OpenClaw Skills 收藏库
-            {loading ? ' · 加载中...' : ` · ${skills.length} 个 Skills`}
-            {lastUpdated && <span style={{ fontSize: '11px', color: '#555', marginLeft: '8px' }}>· 更新于 {lastUpdated}</span>}
-          </p>
+      <header style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '20px 40px', 
+        background: '#161625', 
+        borderBottom: '1px solid #2d2d4a',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: '#667eea', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#fff' }}>X</div>
+          <h1 style={{ fontSize: '20px', fontWeight: '800', margin: 0, letterSpacing: '-0.5px' }}>Xiaoxi Skills Hub</h1>
         </div>
-        <div style={{ marginRight: '24px' }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <nav style={{ display: 'flex', gap: '24px' }}>
+            {['browse', 'discover', 'leaderboard'].map(t => (
+              <button 
+                key={t}
+                onClick={() => setTab(t)}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: tab === t ? '#667eea' : '#888', 
+                  fontSize: '14px', 
+                  fontWeight: '600', 
+                  cursor: 'pointer',
+                  textTransform: 'capitalize'
+                }}
+              >
+                {t}
+              </button>
+            ))}
+            <a href="/submit" style={{ color: '#888', fontSize: '14px', fontWeight: '600', textDecoration: 'none' }}>Submit</a>
+          </nav>
+          
+          <div style={{ width: '1px', height: '20px', background: '#2d2d4a' }}></div>
+          
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img src={user.avatar_url} alt={user.login} style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
-              <span style={{ color: '#e0e0e0', fontSize: '14px' }}>{user.login}</span>
-              <button
-                onClick={handleLogout}
-                style={{ padding: '8px 16px', background: '#2d2d4a', border: 'none', borderRadius: '6px', color: '#e0e0e0', cursor: 'pointer', fontSize: '13px' }}
-              >
-                退出
-              </button>
+              <img src={user.avatar_url} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+              <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#888', fontSize: '13px', cursor: 'pointer' }}>Logout</button>
             </div>
           ) : (
-            <button
-              onClick={handleGitHubLogin}
-              style={{ padding: '8px 16px', background: '#24292e', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.38-2.43-.98-2.43-.98-.29-.74-.71-.94-.71-.94-.73-.49.06-.48.06-.48.8.06 1.23.82 1.23.82.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-              登录 GitHub
-            </button>
+            <a href="/api/auth/login" style={{ background: '#667eea', color: '#fff', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', textDecoration: 'none' }}>Login</a>
           )}
         </div>
       </header>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '24px' }}>
-        {[
-          { key: 'browse', label: '📦 浏览' },
-          { key: 'discover', label: '🔍 发现' },
-          { key: 'leaderboard', label: '🏆 排行榜' },
-          { key: 'submit', label: '📤 投稿' }
-        ].map(t => (
-          <button
-            key={t.key}
-            onClick={() => {
-              if (t.key === 'submit') {
-                window.location.href = '/submit';
-              } else {
-                setTab(t.key);
-              }
-            }}
-            style={{
-              padding: '12px 24px',
-              background: tab === t.key ? '#48bb78' : 'transparent',
-              border: tab === t.key ? 'none' : '1px solid #2d2d4a',
-              borderRadius: '8px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: tab === t.key ? 'bold' : 'normal'
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ==================== BROWSE TAB ==================== */}
-      {tab === 'browse' && (
-        <>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <input
-              type="text"
-              placeholder="🔍 搜索 skills..."
+      {/* Hero Section */}
+      <section style={{ padding: '60px 40px', textAlign: 'center', background: 'linear-gradient(180deg, #161625 0%, #0a0a0f 100%)' }}>
+        <h2 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 16px', color: '#fff' }}>Discover & Share Agent Skills</h2>
+        <p style={{ fontSize: '18px', color: '#888', maxWidth: '600px', margin: '0 auto 32px' }}>
+          The ultimate collection of skills for OpenClaw, Codex, and AI Agents.
+        </p>
+        
+        {tab === 'browse' && (
+          <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative' }}>
+            <input 
+              type="text" 
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ flex: 1, minWidth: '200px', padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search local skills..." 
+              style={{ width: '100%', padding: '16px 24px', background: '#161625', border: '1px solid #2d2d4a', borderRadius: '12px', color: '#fff', fontSize: '16px', outline: 'none' }}
             />
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px' }}>
-              <option value="all">全部来源</option>
-              <option value="workspace">Local ({skills.filter(s => s.source === 'workspace').length})</option>
-              <option value="openclaw">OpenClaw ({skills.filter(s => s.source === 'openclaw').length})</option>
-            </select>
           </div>
+        )}
+      </section>
 
-          {/* Stats Bar */}
-          {!loading && !error && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', padding: '0 24px 24px', flexWrap: 'wrap' }}>
-              {stats.map(s => (
-                <button
-                  key={s.key}
-                  onClick={() => setFilter(s.key)}
-                  style={{
-                    background: filter === s.key ? s.color + '30' : '#1a1a2e',
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    border: filter === s.key ? `1px solid ${s.color}` : '1px solid #2d2d4a',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    minWidth: '100px'
-                  }}
-                >
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: s.color }}>{s.count}</div>
-                  <div style={{ fontSize: '11px', color: '#888' }}>{s.label}</div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Loading State */}
-          {loading && (
-            <div style={{ textAlign: 'center', padding: '64px 24px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🦞</div>
-              <div style={{ color: '#888' }}>加载中...</div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {error}</div>
-              <button onClick={fetchSkills} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
-                🔄 重试
-              </button>
-            </div>
-          )}
-
-          {/* Skills Grid */}
-          {!loading && !error && (
-            <>
-              {filteredSkills.length > 0 ? (
-                <>
-                  <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                    {filteredSkills.map((skill) => (
-                      <div key={skill.name} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button 
-                              onClick={() => openDetail(skill)}
-                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
-                            >
-                              <span style={{ margin: 0, fontSize: '16px', color: '#667eea', textDecoration: 'none' }}>
-                                {skill.name}
-                              </span>
-                              <span style={{ fontSize: '12px', color: '#667eea', marginLeft: '4px' }}>↗</span>
-                            </button>
-                          </div>
-                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
-                            {getSourceLabel(skill.source)}
-                          </span>
-                        </div>
-                        <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5', minHeight: '40px' }}>{skill.desc || skill.name}</p>
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                          {skill.install ? (
-                            <button 
-                              onClick={() => copyToClipboard(skill.install)} 
-                              style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
-                              title={skill.install}
-                            >
-                              📋 复制命令
-                            </button>
-                          ) : (
-                            <span style={{ fontSize: '11px', color: '#666', padding: '6px 12px', background: '#2d2d4a', borderRadius: '4px' }}>
-                              内置技能
-                            </span>
-                          )}
-                          {skill.install && !skill.install.includes('内置') && (
-                            <span style={{ fontSize: '10px', color: '#666' }}>
-                              {skill.install.substring(0, 30)}{skill.install.length > 30 ? '...' : ''}
-                            </span>
-                          )}
-                          {renderStars(skill.stars)}
-                          {renderScore(skill.score)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* More from source */}
-                  <div style={{ textAlign: 'center', padding: '24px 0 48px' }}>
-                    <button
-                      onClick={() => {
-                        const urls = {
-                          local: 'https://github.com/adminlove520/xiaoxi-skills',
-                          openclaw: 'https://github.com/openclaw/openclaw',
-                          clawhub: 'https://clawhub.com/explore',
-                          pending: 'https://github.com/adminlove520/xiaoxi-skills/issues',
-                          all: 'https://skills.sh'
-                        };
-                        window.open(urls[filter] || 'https://skills.sh', '_blank');
-                      }}
-                      style={{
-                        padding: '12px 32px',
-                        background: 'transparent',
-                        border: '1px solid #667eea',
-                        borderRadius: '8px',
-                        color: '#667eea',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      More from {filter === 'all' ? 'All Sources' : filter} →
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '64px 24px', color: '#666' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
-                  <div>没有找到匹配的 Skills</div>
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
-
-      {/* ==================== DISCOVER TAB ==================== */}
-      {tab === 'discover' && (
-        <>
-          <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px 24px' }}>
-            <form onSubmit={handleDiscover} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                placeholder="🔍 输入关键词搜索 Skills..."
-                value={discoverQuery}
-                onChange={(e) => setDiscoverQuery(e.target.value)}
-                style={{ flex: 1, minWidth: '200px', padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }}
-              />
-              <select value={discoverSource} onChange={(e) => setDiscoverSource(e.target.value)} style={{ padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px' }}>
-                <option value="all">全部渠道</option>
-                <option value="clawhub">⚡ ClawHub</option>
-                <option value="github">★ GitHub</option>
-                <option value="skillssh">🔧 skill.sh</option>
-              </select>
-              <button 
-                type="submit" 
-                disabled={discovering || !discoverQuery.trim()}
-                style={{ padding: '12px 24px', background: discovering ? '#555' : '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: discovering ? 'not-allowed' : 'pointer', fontSize: '14px' }}
-              >
-                {discovering ? '⏳ 搜索中...' : '🔍 搜索'}
-              </button>
-            </form>
-          </div>
-
-          {discovering && (
-            <div style={{ textAlign: 'center', padding: '64px 24px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
-              <div style={{ color: '#888' }}>搜索中...</div>
-            </div>
-          )}
-          
-          {discoverError && !discovering && (
-            <div style={{ textAlign: 'center', padding: '24px', color: '#e53' }}>
-              ⚠️ {discoverError}
-            </div>
-          )}
-          
-          {!discovering && discoverResults.length > 0 && (
-            <>
-              <div style={{ textAlign: 'center', padding: '0 24px 16px', color: '#888', fontSize: '13px' }}>
-                找到 {discoverResults.length} 个结果
-              </div>
-              <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                {discoverResults.map((skill, i) => (
-                  <div key={`${skill.source}-${skill.name}-${i}`} style={{ background: '#1a1a2e', borderRadius: '12px', padding: '16px', border: '1px solid #2d2d4a' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
-                        {getSourceLabel(skill.source)}
-                      </span>
-                    </div>
-                    <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#aaa', lineHeight: '1.5' }}>{skill.desc || skill.name}</p>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <button 
-                        onClick={() => copyToClipboard(getInstallCmd(skill))} 
-                        style={{ fontSize: '11px', padding: '6px 12px', borderRadius: '4px', background: '#667eea', color: '#fff', border: 'none', cursor: 'pointer' }}
-                      >
-                        📋 安装
-                      </button>
-                      <span style={{ fontSize: '10px', color: '#666' }}>
-                        {skill.source === 'clawhub' ? 'clawdhub' : skill.source === 'github' ? 'git clone' : skill.source === 'skillssh' ? 'npx skills' : 'clawdhub'}
-                      </span>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {renderStars(skill.stars)}
-                        {renderScore(skill.score)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {!discovering && discoverResults.length === 0 && !discoverError && !discoverQuery && (
-            <div style={{ textAlign: 'center', padding: '64px 24px', color: '#666' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
-              <div>输入关键词搜索 ClawHub、GitHub、skill.sh 上的 Skills</div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ==================== LEADERBOARD TAB ==================== */}
-      {tab === 'leaderboard' && (
-        <>
-          {/* Leaderboard Sub-Tabs */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '0 24px 24px' }}>
-            {LEADERBOARD_TABS.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setLeaderboardTab(t.key)}
-                style={{
-                  padding: '10px 20px',
-                  background: leaderboardTab === t.key ? t.color : 'transparent',
-                  border: leaderboardTab === t.key ? 'none' : '1px solid #2d2d4a',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontSize: '13px'
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {boardNote && (
-            <div style={{ textAlign: 'center', padding: '0 24px 16px', color: '#888', fontSize: '12px' }}>
-              ℹ️ {boardNote}
-            </div>
-          )}
-
-          {/* Loading State */}
-          {leaderboardLoading[leaderboardTab] && (
-            <div style={{ textAlign: 'center', padding: '64px 24px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
-              <div style={{ color: '#888' }}>加载{LEADERBOARD_TABS.find(t => t.key === leaderboardTab)?.label}...</div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {leaderboardError[leaderboardTab] && !leaderboardLoading[leaderboardTab] && (
-            <div style={{ textAlign: 'center', padding: '24px' }}>
-              <div style={{ color: '#e53', marginBottom: '16px' }}>❌ {leaderboardError[leaderboardTab]}</div>
-              <button onClick={() => retryLeaderboard(leaderboardTab)} style={{ padding: '12px 24px', background: '#667eea', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>
-                🔄 重试
-              </button>
-            </div>
-          )}
-
-          {/* Data Display */}
-          {!leaderboardLoading[leaderboardTab] && !leaderboardError[leaderboardTab] && leaderboard[leaderboardTab]?.length > 0 && (
-            <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px 48px' }}>
-              {leaderboard[leaderboardTab].map((skill, i) => (
-                <div 
-                  key={`${skill.name}-${i}`} 
+      {/* Main Content */}
+      <main style={{ padding: '0 40px 80px', maxWidth: '1400px', margin: '0 auto' }}>
+        {tab === 'browse' && (
+          <>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
+              {['all', 'workspace', 'openclaw', 'agents'].map(f => (
+                <button 
+                  key={f}
+                  onClick={() => setFilter(f)}
                   style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '16px', 
-                    background: '#1a1a2e', 
-                    borderRadius: '12px', 
-                    padding: '16px', 
-                    marginBottom: '12px', 
-                    border: i < 3 ? `1px solid ${['#f6c90e', '#c0c0c0', '#cd7f32'][i]}50` : '1px solid #2d2d4a'
-                  }}
-                >
-                  <div style={{ 
-                    width: '40px', 
-                    height: '40px', 
-                    borderRadius: '50%', 
-                    background: i < 3 ? ['#f6c90e', '#c0c0c0', '#cd7f32'][i] : '#2d2d4a', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    fontSize: '18px', 
-                    fontWeight: 'bold', 
-                    color: i < 3 ? '#000' : '#888' 
-                  }}>
-                    {i + 1}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    {skill.url ? (
-                      <a href={skill.url} target="_blank" rel="noopener noreferrer" style={{ margin: 0, fontSize: '16px', color: '#667eea', textDecoration: 'none' }}>
-                        {skill.name} ↗
-                      </a>
-                    ) : (
-                      <h3 style={{ margin: 0, fontSize: '16px', color: '#667eea' }}>{skill.name}</h3>
-                    )}
-                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#aaa' }}>{skill.desc || skill.name}</p>
-                    {skill.category && (
-                      <span style={{ fontSize: '10px', color: '#667eea', background: '#667eea20', padding: '2px 8px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>
-                        {skill.category}
-                      </span>
-                    )}
-                    {skill.installs && (
-                      <span style={{ fontSize: '10px', color: '#48bb78', marginLeft: '8px' }}>
-                        ↑ {skill.installs.toLocaleString()}
-                      </span>
-                    )}
-                    {skill.install && !skill.install.includes('内置') && (
-                      <span style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '4px' }}>
-                        {skill.install}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ textAlign: 'right', minWidth: '80px' }}>
-                    {renderStars(skill.stars)}
-                    {renderScore(skill.score)}
-                  </div>
-                  <button 
-                    onClick={() => copyToClipboard(skill.install || getInstallCmd(skill))} 
-                    style={{ padding: '8px 16px', background: '#667eea', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '12px' }}
-                    title={skill.install || getInstallCmd(skill)}
-                  >
-                    📋
-                  </button>
-                </div>
-              ))}
-              
-              {/* More from source button */}
-              <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <button
-                  onClick={() => {
-                    const urls = {
-                      trending: 'https://clawhub.com/explore',
-                      clawhub: 'https://clawhub.com/explore',
-                      github: 'https://github.com/search?q=openclaw+skill&type=repositories',
-                      skillssh: 'https://skills.sh'
-                    };
-                    window.open(urls[leaderboardTab] || 'https://skills.sh', '_blank');
-                  }}
-                  style={{
-                    padding: '12px 32px',
-                    background: 'transparent',
-                    border: '1px solid #667eea',
-                    borderRadius: '8px',
-                    color: '#667eea',
+                    padding: '8px 20px', 
+                    borderRadius: '20px', 
+                    background: filter === f ? '#667eea' : '#161625', 
+                    color: filter === f ? '#fff' : '#888',
+                    border: '1px solid #2d2d4a',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    fontWeight: 'bold'
+                    fontWeight: '600',
+                    textTransform: 'capitalize'
                   }}
                 >
-                  More from {LEADERBOARD_TABS.find(t => t.key === leaderboardTab)?.label.replace(/[^a-zA-Z]/g, '') || 'source'} →
+                  {f}
                 </button>
-              </div>
+              ))}
             </div>
-          )}
 
-          {/* Empty State */}
-          {!leaderboardLoading[leaderboardTab] && !leaderboardError[leaderboardTab] && leaderboard[leaderboardTab]?.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '64px 24px', color: '#666' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
-              <div>暂无数据</div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Detail Modal */}
-      {showDetail && detailSkill && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '24px'
-          }}
-          onClick={closeDetail}
-        >
-          <div 
-            style={{
-              background: '#1a1a2e',
-              borderRadius: '16px',
-              padding: '32px',
-              maxWidth: '600px',
-              width: '100%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              border: '1px solid #2d2d4a',
-              position: 'relative'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={closeDetail}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: '#2d2d4a',
-                border: 'none',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ×
-            </button>
-            
-            {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <h2 style={{ margin: 0, fontSize: '24px', color: '#fff' }}>{detailSkill.name}</h2>
-                <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', ...getSourceStyle(detailSkill.source) }}>
-                  {getSourceLabel(detailSkill.source)}
-                </span>
-              </div>
-              <p style={{ margin: 0, color: '#aaa', fontSize: '14px', lineHeight: '1.6' }}>
-                {detailSkill.desc || detailSkill.name}
-              </p>
-            </div>
-            
-            {/* Install Section */}
-            <div style={{ background: '#0a0a0f', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>安装命令</div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                <code style={{ flex: 1, background: '#1a1a2e', padding: '12px', borderRadius: '8px', fontSize: '13px', color: '#667eea', wordBreak: 'break-all' }}>
-                  {detailSkill.install}
-                </code>
-                <button
-                  onClick={() => copyToClipboard(detailSkill.install)}
-                  style={{
-                    padding: '10px 16px',
-                    background: '#667eea',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  📋 复制
-                </button>
-              </div>
-            </div>
-            
-            {/* GitHub Link */}
-            {detailSkill.url && (
-              <div style={{ marginBottom: '20px' }}>
-                <a 
-                  href={detailSkill.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    background: '#48bb7820',
-                    border: '1px solid #48bb7840',
-                    borderRadius: '8px',
-                    color: '#48bb78',
-                    textDecoration: 'none',
-                    fontSize: '13px'
-                  }}
-                >
-                  ↗ 在 GitHub 查看源码
-                </a>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '100px' }}>Loading skills...</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+                {filteredSkills.map(skill => (
+                  <SkillCard 
+                    key={`${skill.source}-${skill.name}`} 
+                    skill={skill} 
+                    onDetail={(s) => { setDetailSkill(s); setShowDetail(true); }}
+                    onCopy={copyToClipboard}
+                  />
+                ))}
               </div>
             )}
-            
-            {/* Status Badge */}
-          </div>
-        </div>
+          </>
+        )}
+
+        {tab === 'discover' && (
+          <DiscoverSection 
+            onDetail={(s) => { setDetailSkill(s); setShowDetail(true); }}
+            onCopy={copyToClipboard}
+          />
+        )}
+
+        {tab === 'leaderboard' && (
+          <Leaderboard 
+            onDetail={(s) => { setDetailSkill(s); setShowDetail(true); }}
+            onCopy={copyToClipboard}
+          />
+        )}
+      </main>
+
+      {/* Detail Modal */}
+      {showDetail && (
+        <SkillDetailModal 
+          skill={detailSkill} 
+          onClose={() => setShowDetail(false)} 
+          onCopy={copyToClipboard}
+        />
       )}
 
       {/* Footer */}
-      <footer style={{ textAlign: 'center', padding: '24px', borderTop: '1px solid #1a1a2e', color: '#666', fontSize: '12px' }}>
-        <p>
-          🦞 Made with ❤️ by xiaoxi · 
-          <a href="https://github.com/adminlove520/xiaoxi-skills" style={{ color: '#667eea', textDecoration: 'none', marginLeft: '8px' }}>GitHub</a> ·
-          <a href="https://clawhub.com" style={{ color: '#667eea', textDecoration: 'none', marginLeft: '8px' }}>ClawHub</a>
-        </p>
-      </footer>
+      <footer style={{ padding: '60px 40px', background: '#0a0a0f', borderTop: '1px solid #2d2d4a', textAlign: 'center' }}>
+        <p style={{ color: '#555', fontSize: '14px' }}>© 2026 Xiaoxi Skills. Built for the OpenClaw Ecosystem.</p>
+      </header>
     </div>
   );
 }

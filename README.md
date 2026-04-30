@@ -2,6 +2,8 @@
 
 > 小溪自用 + 推荐的高质量 Skills 收藏库 | 持续更新
 
+本项目是一个面向 OpenClaw, Codex 和 AI Agent 生态的技能集合，并提供了一个现代化的 **SkillHub** 平台用于浏览、搜索和发布技能。
+
 ## 📦 快速安装
 
 ```bash
@@ -15,61 +17,45 @@ bash scripts/install.sh
 node scripts/install.js
 ```
 
-## 📚 文档目录
+## 🌐 SkillHub 平台
 
-| 目录 | 说明 |
-|------|------|
-| docs/README.md | 全量 Skills 索引 |
-| docs/INSTALL.md | 详细安装指南 |
-| docs/skills/ | 每个 Skill 的使用配置说明 |
+**SkillHub** 是基于 Next.js 构建的高性能技能展示平台：
+- **在线访问**: [xiaoxi-skills.vercel.app](https://xiaoxi-skills.vercel.app)
+- **动态发现**: 自动扫描仓库目录（workspace/openclaw/agents），动态提取 `SKILL.md` 中的元数据，消除手动维护成本。
+- **全球发现**: 集成 **ClawHub**, **GitHub** 和 **skill.sh** API，一站式搜索全球技能。
+- **实时排行**: 基于多维加权算法的趋势排行榜。
+- **GitHub 集成**: 支持 GitHub OAuth 登录，并提供仿 ClawHub 风格的**仓库导入**投稿功能。
 
-## 🎯 Skills 统计
+## 🛠️ 项目架构
 
-| 来源 | 数量 |
-|------|------|
-| workspace | 44 |
-| openclaw | 24 |
-| repo | 73 |
-| **总计** | **73** |
-
-## 📖 查看某个 Skill 的文档
-
-```bash
-# 列出所有 Skill
-ls docs/skills/
-
-# 查看具体 Skill
-cat docs/skills/agent-reach.md
-cat docs/skills/clawhub.md
-cat docs/skills/minimax-docx.md
+```text
+.
+├── agents/             # 代理类技能
+├── openclaw/           # OpenClaw 核心扩展技能
+├── workspace/          # 工作流与生产力技能
+├── skillhub/           # Next.js Web 平台
+│   ├── app/
+│   │   ├── api/        # 优化过的并行 API 层
+│   │   └── components/ # 模块化 React 组件
+├── scripts/            # 自动化安装与同步脚本
+└── README.md
 ```
 
-## 🔧 常用命令
+## 🚀 核心优化 (v2.2.0)
 
-```bash
-# 安装单个 Skill
-cp -r <skill-dir> ~/.openclaw/skills/
+1.  **性能飞跃**: API 层全面采用 `Promise.all` 并行处理，显著提升了加载速度。
+2.  **代码现代化**: 
+    - 重构了前端页面，拆分为 `SkillCard`, `Leaderboard`, `Discover` 等模块化组件。
+    - 引入了 `utils.js` 进行动态技能发现，支持无限扩展。
+3.  **安全性增强**: 修复了 OAuth 流程中的 BOM 字符干扰和 CSRF 安全隐患。
+4.  **开发者体验 (DX)**: 增加了 `.env.example`, `next.config.js` 路径追踪，以及更完善的安装脚本提示。
 
-# 查看已安装 Skills
-openclaw skills list
+## 📝 贡献指南
 
-# 更新 Skills
-bash scripts/sync.sh
-```
+1.  登录 SkillHub。
+2.  点击 **Submit** 页面。
+3.  选择你的 GitHub 仓库或手动输入 `SKILL.md` 内容。
+4.  提交后系统会自动创建 Pull Request。
 
-## 🌐 在线资源 & SkillHub 增强
-
-- **SkillHub**: https://xiaoxi-skills.vercel.app （浏览所有 Skills）
-- **GitHub**: https://github.com/adminlove520/xiaoxi-skills
-
-### 🚀 SkillHub 新功能
-SkillHub 现已支持开发者深度参与：
-- **GitHub 登录**: 快捷同步您的 GitHub 账号。
-- **PR 提交**: 支持在线编辑 Skill 并直接提交 Pull Request，简化贡献流程。
-- **动态发现**: 自动发现并索引包含 `SKILL.md` 的所有技能模块。
-
-## 📝 CHANGELOG
-
-- 2026-04-30: 脚本升级，支持动态发现 SKILL.md，支持 -f 强制覆盖，SkillHub 增加 GitHub 登录和 PR 提交功能。
-- 2026-04-28: 新增 30 个 Skills，整理文档和安装脚本，添加 Vercel SkillHub
-- 2026-03-15: 初始化收藏库
+---
+© 2026 Xiaoxi Skills. Built for the AI Agent Era.

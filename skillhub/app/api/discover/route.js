@@ -1,5 +1,6 @@
 // Discover API - 多渠道搜索 Skills
-// 支持: clawhub (真实API), github, skill.sh
+// 支持: clawhub, github, skill.sh
+// 优化: 并行请求加速
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -27,21 +28,20 @@ export async function GET(request) {
   try {
     const results = [];
 
-    // 1. ClawHub 搜索 - 使用真实 API
+    // Parallelize search from different sources
+    const searchTasks = [];
+
+    // 1. ClawHub 搜索
     if (source === 'all' || source === 'clawhub') {
-      try {
-        const clawhubRes = await fetch(
-          `https://clawhub.ai/api/v1/search?q=${encodeURIComponent(query)}&limit=15`,
-          { 
+      searchTasks.push((async () => {
+        try {
+          const res = await fetch(`https://clawhub.ai/api/v1/search?q=${encodeURIComponent(query)}&limit=15`, { 
             headers: clawhubHeaders,
             next: { revalidate: 1800 }
-          }
-        );
-        
-        if (clawhubRes.ok) {
-          const data = await clawhubRes.json();
-          (data.results || []).forEach(skill => {
-            results.push({
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return (data.results || []).map(skill => ({
               name: skill.slug,
               desc: skill.summary || skill.displayName || skill.slug,
               displayName: skill.displayName,
@@ -49,31 +49,24 @@ export async function GET(request) {
               source: 'clawhub',
               install: 'clawdhub',
               version: skill.version
-            });
-          });
-        }
-      } catch (e) {
-        console.warn('ClawHub API error:', e.message);
-      }
+            }));
+          }
+        } catch (e) { console.warn('ClawHub search error:', e.message); }
+        return [];
+      })());
     }
 
-    // 2. GitHub 搜索 SKILL.md 文件
+    // 2. GitHub 搜索
     if (source === 'all' || source === 'github') {
-      try {
-        const ghRes = await fetch(
-          `https://api.github.com/search/code?q=filename:SKILL.md+${encodeURIComponent(query)}&per_page=15&sort=stars&order=desc`,
-          { 
+      searchTasks.push((async () => {
+        try {
+          const res = await fetch(`https://api.github.com/search/code?q=filename:SKILL.md+${encodeURIComponent(query)}&per_page=15&sort=stars&order=desc`, { 
             headers: ghHeaders,
             next: { revalidate: 3600 }
-          }
-        );
-        
-        if (ghRes.status === 403) {
-          console.warn('GitHub API rate limited');
-        } else if (ghRes.ok) {
-          const data = await ghRes.json();
-          (data.items || []).forEach(item => {
-            results.push({
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return (data.items || []).map(item => ({
               name: item.repository.full_name.split('/')[1]?.replace(/[-_](skill|skills)$/i, '') || item.repository.name,
               desc: item.repository.description || item.repository.full_name,
               repo: item.repository.full_name,
@@ -81,29 +74,24 @@ export async function GET(request) {
               source: 'github',
               install: 'git',
               url: item.html_url
-            });
-          });
-        }
-      } catch (e) {
-        console.warn('GitHub API error:', e.message);
-      }
+            }));
+          }
+        } catch (e) { console.warn('GitHub search error:', e.message); }
+        return [];
+      })());
     }
 
     // 3. skill.sh 搜索
     if (source === 'all' || source === 'skillssh') {
-      try {
-        const ghRes = await fetch(
-          `https://api.github.com/search/repositories?q=skill.sh+${encodeURIComponent(query)}+in:readme&sort=stars&order=desc&per_page=10`,
-          { 
+      searchTasks.push((async () => {
+        try {
+          const res = await fetch(`https://api.github.com/search/repositories?q=skill.sh+${encodeURIComponent(query)}+in:readme&sort=stars&order=desc&per_page=10`, { 
             headers: ghHeaders,
             next: { revalidate: 3600 }
-          }
-        );
-        
-        if (ghRes.ok) {
-          const data = await ghRes.json();
-          (data.items || []).forEach(repo => {
-            results.push({
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return (data.items || []).map(repo => ({
               name: repo.name.replace(/[-_](skill|skills)$/i, ''),
               desc: `[skill.sh] ${repo.description || repo.name}`,
               repo: repo.full_name,
@@ -111,13 +99,15 @@ export async function GET(request) {
               source: 'skillssh',
               install: 'git',
               url: repo.html_url
-            });
-          });
-        }
-      } catch (e) {
-        console.warn('skill.sh search error:', e.message);
-      }
+            }));
+          }
+        } catch (e) { console.warn('skill.sh search error:', e.message); }
+        return [];
+      })());
     }
+
+    const taskResults = await Promise.all(searchTasks);
+    taskResults.forEach(r => results.push(...r));
 
     // 按相关性排序
     results.sort((a, b) => {

@@ -1,5 +1,6 @@
 // Leaderboard API - 各渠道 Top 10 Skills 排行榜
 // 使用真实 ClawHub API + skills.sh + GitHub
+// 优化: 并行请求加速
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -26,53 +27,51 @@ export async function GET(request) {
       trending: []
     };
 
-    // 1. ClawHub Top 10 - 使用真实 trending API
-    try {
-      const clawhubRes = await fetch(
-        `https://clawhub.ai/api/v1/packages?sort=updated&limit=15`,
-        { 
-          headers: clawhubHeaders,
-          next: { revalidate: 1800 }
-        }
-      );
-      
-      if (clawhubRes.ok) {
-        const data = await clawhubRes.json();
-        (data.items || []).slice(0, 10).forEach((skill, i) => {
-          rankings.clawhub.push({
-            name: skill.name,
-            desc: skill.summary || skill.displayName || skill.name,
-            displayName: skill.displayName,
-            score: (10 - i) + 3.5,
-            category: 'trending',
-            source: 'clawhub',
-            install: 'clawdhub',
-            updatedAt: skill.updatedAt
-          });
-        });
-      }
-    } catch (e) {
-      console.warn('ClawHub API error:', e.message);
-    }
-
-    // 2. skills.sh Top 10 - 使用真实 API (按 installs 排序)
-    try {
-      const searches = ['ai', 'code', 'twitter', 'github', 'memory', 'browser', 'web', 'productivity', 'video', 'social'];
-      const seen = new Set();
-      
-      for (const q of searches) {
+    // 1. Parallel fetching from all sources
+    const [clawhubResults, skillsshResults, githubResults] = await Promise.all([
+      // ClawHub Top 10
+      (async () => {
         try {
-          const res = await fetch(
-            `https://skills.sh/api/search?q=${encodeURIComponent(q)}&limit=5`,
-            { next: { revalidate: 1800 } }
-          );
-          
+          const res = await fetch(`https://clawhub.ai/api/v1/packages?sort=updated&limit=15`, { 
+            headers: clawhubHeaders,
+            next: { revalidate: 1800 }
+          });
           if (res.ok) {
             const data = await res.json();
+            return (data.items || []).slice(0, 10).map((skill, i) => ({
+              name: skill.name,
+              desc: skill.summary || skill.displayName || skill.name,
+              displayName: skill.displayName,
+              score: (10 - i) + 3.5,
+              category: 'trending',
+              source: 'clawhub',
+              install: 'clawdhub',
+              updatedAt: skill.updatedAt
+            }));
+          }
+        } catch (e) { console.warn('ClawHub API error:', e.message); }
+        return [];
+      })(),
+
+      // skills.sh Top 10
+      (async () => {
+        try {
+          const searches = ['ai', 'code', 'twitter', 'github', 'memory', 'browser', 'web', 'productivity', 'video', 'social'];
+          const results = [];
+          const seen = new Set();
+          
+          const searchPromises = searches.map(q => 
+            fetch(`https://skills.sh/api/search?q=${encodeURIComponent(q)}&limit=5`, { next: { revalidate: 1800 } })
+              .then(res => res.ok ? res.json() : { skills: [] })
+              .catch(() => ({ skills: [] }))
+          );
+          
+          const searchData = await Promise.all(searchPromises);
+          searchData.forEach(data => {
             (data.skills || []).forEach(skill => {
               if (!seen.has(skill.id)) {
                 seen.add(skill.id);
-                rankings.skillssh.push({
+                results.push({
                   name: skill.name,
                   desc: skill.name,
                   repo: skill.source,
@@ -82,63 +81,56 @@ export async function GET(request) {
                 });
               }
             });
-          }
-        } catch (e) {
-          console.warn(`skills.sh search failed for ${q}:`, e.message);
-        }
-      }
-      
-      rankings.skillssh = rankings.skillssh
-        .sort((a, b) => (b.installs || 0) - (a.installs || 0))
-        .slice(0, 10);
-    } catch (e) {
-      console.warn('skills.sh API error:', e.message);
-    }
-
-    // 3. GitHub Top 10 (按 stars)
-    const topics = ['openclaw-skill', 'openclaw-skills', 'clawhub-skill', 'ai-agent-skill'];
-    const ghSeen = new Set();
-    
-    for (const topic of topics) {
-      try {
-        const ghRes = await fetch(
-          `https://api.github.com/search/repositories?q=topic:${topic}+is:public&sort=stars&order=desc&per_page=15`,
-          { 
-            headers: ghHeaders,
-            next: { revalidate: 3600 }
-          }
-        );
-        
-        if (ghRes.status === 403) break;
-        
-        if (ghRes.ok) {
-          const data = await ghRes.json();
-          (data.items || []).forEach(repo => {
-            if (!ghSeen.has(repo.id)) {
-              ghSeen.add(repo.id);
-              rankings.github.push({
-                name: repo.name.replace(/[-_](skill|skills)$/i, ''),
-                desc: repo.description || repo.name,
-                repo: repo.full_name,
-                stars: repo.stargazers_count,
-                forks: repo.forks_count,
-                source: 'github',
-                install: 'git',
-                url: repo.html_url
-              });
-            }
           });
-        }
-      } catch (e) {
-        console.warn(`GitHub search failed for topic ${topic}:`, e.message);
-      }
-    }
-    
-    rankings.github = rankings.github
-      .sort((a, b) => b.stars - a.stars)
-      .slice(0, 10);
+          return results.sort((a, b) => (b.installs || 0) - (a.installs || 0)).slice(0, 10);
+        } catch (e) { console.warn('skills.sh API error:', e.message); }
+        return [];
+      })(),
 
-    // 4. Trending - 综合排名
+      // GitHub Top 10
+      (async () => {
+        try {
+          const topics = ['openclaw-skill', 'openclaw-skills', 'clawhub-skill', 'ai-agent-skill'];
+          const results = [];
+          const seen = new Set();
+          
+          const searchPromises = topics.map(topic => 
+            fetch(`https://api.github.com/search/repositories?q=topic:${topic}+is:public&sort=stars&order=desc&per_page=15`, { 
+              headers: ghHeaders,
+              next: { revalidate: 3600 }
+            }).then(res => res.ok ? res.json() : { items: [] })
+              .catch(() => ({ items: [] }))
+          );
+          
+          const searchData = await Promise.all(searchPromises);
+          searchData.forEach(data => {
+            (data.items || []).forEach(repo => {
+              if (!seen.has(repo.id)) {
+                seen.add(repo.id);
+                results.push({
+                  name: repo.name.replace(/[-_](skill|skills)$/i, ''),
+                  desc: repo.description || repo.name,
+                  repo: repo.full_name,
+                  stars: repo.stargazers_count,
+                  forks: repo.forks_count,
+                  source: 'github',
+                  install: 'git',
+                  url: repo.html_url
+                });
+              }
+            });
+          });
+          return results.sort((a, b) => b.stars - a.stars).slice(0, 10);
+        } catch (e) { console.warn('GitHub API error:', e.message); }
+        return [];
+      })()
+    ]);
+
+    rankings.clawhub = clawhubResults;
+    rankings.skillssh = skillsshResults;
+    rankings.github = githubResults;
+
+    // 2. Trending - 综合排名 (综合加权得分)
     const trendingMap = new Map();
     
     rankings.clawhub.forEach((skill, i) => {

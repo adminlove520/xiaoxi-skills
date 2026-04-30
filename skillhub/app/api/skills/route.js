@@ -1,43 +1,22 @@
 // Skills API - 获取 Skills 列表
-// 更新: 2026-04-30 - 重构版, 分 WORKSPACE/OPENCLAW/AGENTS 三类
+// 优化: 动态从目录读取，消除手动维护成本
 
-import { WORKSPACE_SKILLS, OPENCLAW_SKILLS, AGENTS_SKILLS, STATS } from '../skills-data.js';
+import { getLocalSkills } from '../utils.js';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const source = searchParams.get('source') || 'all';
   const filter = searchParams.get('filter') || '';
 
+  const localData = getLocalSkills();
   let skills = [];
   
-  // 根据 source 过滤
-  if (source === 'all' || source === 'workspace') {
-    skills = skills.concat(WORKSPACE_SKILLS.map(s => ({
-      ...s,
-      source: 'workspace',
-      install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/workspace/${s.name} ~/.openclaw/skills/`,
-      url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/workspace/${s.name}`
-    })));
+  if (source === 'all') {
+    skills = [...localData.workspace, ...localData.openclaw, ...localData.agents];
+  } else if (localData[source]) {
+    skills = localData[source];
   }
   
-  if (source === 'all' || source === 'openclaw') {
-    skills = skills.concat(OPENCLAW_SKILLS.map(s => ({
-      ...s,
-      source: 'openclaw',
-      install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/openclaw/${s.name} ~/.openclaw/skills/`,
-      url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/openclaw/${s.name}`
-    })));
-  }
-
-  if (source === 'all' || source === 'agents') {
-    skills = skills.concat(AGENTS_SKILLS.map(s => ({
-      ...s,
-      source: 'agents',
-      install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/agents/${s.name} ~/.openclaw/skills/`,
-      url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/agents/${s.name}`
-    })));
-  }
-
   // 关键词过滤
   if (filter) {
     const q = filter.toLowerCase();
@@ -50,7 +29,12 @@ export async function GET(request) {
   return Response.json({
     success: true,
     total: skills.length,
-    stats: STATS,
+    stats: {
+      workspace: localData.workspace.length,
+      openclaw: localData.openclaw.length,
+      agents: localData.agents.length,
+      total: localData.total
+    },
     skills
   });
 }
