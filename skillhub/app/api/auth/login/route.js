@@ -3,15 +3,13 @@
 
 export async function GET(request) {
   // 从 Vercel 环境变量 或 本地 fallback 获取配置
-  let GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-  let REDIRECT_URI = process.env.GITHUB_REDIRECT_URI;
+  // 只从环境变量读取配置
+  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+  const REDIRECT_URI = process.env.GITHUB_REDIRECT_URI;
   
-  // Fallback: 如果是空值或 placeholder，用本地测试值
-  if (!GITHUB_CLIENT_ID || GITHUB_CLIENT_ID === 'GitHub OAuth App client ID' || GITHUB_CLIENT_ID === 'PLACEHOLDER_fill_me') {
-    GITHUB_CLIENT_ID = 'Ov231i1LWbTWxKhRMR38';
-  }
-  if (!REDIRECT_URI || REDIRECT_URI === 'OAuth callback URL' || REDIRECT_URI.includes('PLACEHOLDER')) {
-    REDIRECT_URI = 'https://skillhub-eight.vercel.app/api/auth/callback';
+  // 如果环境变量未配置，返回错误
+  if (!GITHUB_CLIENT_ID || !REDIRECT_URI) {
+    return Response.json({ success: false, error: 'OAuth not configured' }, { status: 500 });
   }
 
   // 生成随机 state 用于 CSRF 防护

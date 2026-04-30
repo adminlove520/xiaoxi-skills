@@ -20,17 +20,11 @@ export async function GET(request) {
   }
 
   // 从 Vercel 环境变量 或 本地 fallback 获取配置
-  let GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-  let GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
-
-  // Fallback: 如果是空值或 placeholder，用本地测试值
-  if (!GITHUB_CLIENT_ID || GITHUB_CLIENT_ID === 'GitHub OAuth App client ID' || GITHUB_CLIENT_ID === 'PLACEHOLDER_fill_me') {
-    GITHUB_CLIENT_ID = 'Ov231i1LWbTWxKhRMR38';
-  }
-  if (!GITHUB_CLIENT_SECRET || GITHUB_CLIENT_SECRET === 'GitHub OAuth App client secret' || GITHUB_CLIENT_SECRET === 'PLACEHOLDER_fill_me') {
-    GITHUB_CLIENT_SECRET = '23b5438bd92266ac9a98689fca9d6845c25cfea3';
-  }
-
+  // 只从环境变量读取配置
+  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+  const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+  
+  // 如果环境变量未配置，返回错误
   if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
     return Response.redirect(`${origin}/?auth_error=oauth_not_configured`);
   }

@@ -118,7 +118,7 @@ function buildSkillList(source, skills) {
   return skills.map(s => ({
     ...s,
     source,
-    install: `cp -r ~/.openclaw/xiaoxi-skills/${source}/${s.name} ~/.openclaw/skills/`,
+    install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/${source}/${s.name} ~/.openclaw/skills/`,
     url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/${source}/${s.name}`
   }));
 }

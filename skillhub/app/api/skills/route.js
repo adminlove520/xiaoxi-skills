@@ -15,7 +15,7 @@ export async function GET(request) {
     skills = skills.concat(WORKSPACE_SKILLS.map(s => ({
       ...s,
       source: 'workspace',
-      install: `cp -r ~/.openclaw/xiaoxi-skills/workspace/${s.name} ~/.openclaw/skills/`,
+      install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/workspace/${s.name} ~/.openclaw/skills/`,
       url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/workspace/${s.name}`
     })));
   }
@@ -24,7 +24,7 @@ export async function GET(request) {
     skills = skills.concat(OPENCLAW_SKILLS.map(s => ({
       ...s,
       source: 'openclaw',
-      install: `cp -r ~/.openclaw/xiaoxi-skills/openclaw/${s.name} ~/.openclaw/skills/`,
+      install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/openclaw/${s.name} ~/.openclaw/skills/`,
       url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/openclaw/${s.name}`
     })));
   }
@@ -33,7 +33,7 @@ export async function GET(request) {
     skills = skills.concat(AGENTS_SKILLS.map(s => ({
       ...s,
       source: 'agents',
-      install: `cp -r ~/.openclaw/xiaoxi-skills/agents/${s.name} ~/.openclaw/skills/`,
+      install: `git clone https://github.com/adminlove520/xiaoxi-skills && cp -r xiaoxi-skills/agents/${s.name} ~/.openclaw/skills/`,
       url: `https://github.com/adminlove520/xiaoxi-skills/tree/main/agents/${s.name}`
     })));
   }
