@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import SkillCard from './SkillCard';
 import { LEADERBOARD_TABS } from './constants';
 
+// V2.2.2 - Fixed tab change bug and added robustness
 export default function Leaderboard({ onDetail, onCopy }) {
   const [activeTab, setActiveTab] = useState('trending');
   const [data, setData] = useState({
@@ -24,19 +25,22 @@ export default function Leaderboard({ onDetail, onCopy }) {
   });
 
   const fetchLeaderboard = async (tab) => {
-    if (data[tab].length > 0) return; // Cache
+    // 确保 data 存在且含有该 tab
+    if (data && data[tab] && data[tab].length > 0) return; 
 
     setLoading(prev => ({ ...prev, [tab]: true }));
     setError(prev => ({ ...prev, [tab]: null }));
     try {
       const res = await fetch(`/api/leaderboard?source=${tab}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const result = await res.json();
       if (result.success) {
         setData(prev => ({ ...prev, [tab]: result.rankings || [] }));
       } else {
-        setError(prev => ({ ...prev, [tab]: result.error }));
+        setError(prev => ({ ...prev, [tab]: result.error || '获取数据失败' }));
       }
     } catch (e) {
+      console.error('Fetch leaderboard failed:', e);
       setError(prev => ({ ...prev, [tab]: e.message }));
     } finally {
       setLoading(prev => ({ ...prev, [tab]: false }));
@@ -44,12 +48,14 @@ export default function Leaderboard({ onDetail, onCopy }) {
   };
 
   useEffect(() => {
-    fetchLeaderboard(activeTab);
+    if (activeTab) {
+      fetchLeaderboard(activeTab);
+    }
   }, [activeTab]);
 
-  const currentData = data[activeTab] || [];
-  const currentLoading = loading[activeTab];
-  const currentError = error[activeTab];
+  const currentData = (data && data[activeTab]) ? data[activeTab] : [];
+  const currentLoading = loading ? loading[activeTab] : false;
+  const currentError = error ? error[activeTab] : null;
 
   return (
     <div style={{ marginTop: '32px' }}>
@@ -60,15 +66,15 @@ export default function Leaderboard({ onDetail, onCopy }) {
         overflowX: 'auto', 
         paddingBottom: '8px' 
       }}>
-        {LEADERBOARD_TABS.map(tab => (
+        {LEADERBOARD_TABS.map(tabItem => (
           <button
-            key={tab.key}
-            onClick={() => onTabChange(tab.key)}
+            key={tabItem.key}
+            onClick={() => setActiveTab(tabItem.key)}
             style={{
               padding: '8px 16px',
-              background: activeTab === tab.key ? tab.color : '#161625',
-              color: activeTab === tab.key ? '#fff' : '#888',
-              border: `1px solid ${activeTab === tab.key ? tab.color : '#2d2d4a'}`,
+              background: activeTab === tabItem.key ? tabItem.color : '#161625',
+              color: activeTab === tabItem.key ? '#fff' : '#888',
+              border: `1px solid ${activeTab === tabItem.key ? tabItem.color : '#2d2d4a'}`,
               borderRadius: '20px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -77,7 +83,7 @@ export default function Leaderboard({ onDetail, onCopy }) {
               transition: 'all 0.2s'
             }}
           >
-            {tab.label}
+            {tabItem.label}
           </button>
         ))}
       </div>
