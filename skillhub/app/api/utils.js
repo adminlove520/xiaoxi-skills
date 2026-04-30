@@ -6,7 +6,7 @@ import path from 'path';
  * 按 workspace, openclaw, agents 分类
  */
 export function getLocalSkills() {
-  const rootDir = path.resolve(process.cwd(), '..'); 
+  const rootDir = path.join(process.cwd(), 'data'); 
   const categories = ['workspace', 'openclaw', 'agents'];
   
   // Try to determine if we are in a Vercel-like environment where process.cwd() might be different

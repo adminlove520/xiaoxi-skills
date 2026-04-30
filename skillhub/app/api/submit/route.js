@@ -42,7 +42,7 @@ export async function POST(request) {
         steps: [
           '1. Fork xiaoxi-skills 仓库',
           '2. 创建新分支',
-          '3. 在 skills/ 目录下创建你的 Skill 目录',
+          '3. 在 skillhub/data/workspace/ 目录下创建你的 Skill 目录',
           '4. 添加 SKILL.md',
           '5. 提交 PR'
         ]
@@ -61,7 +61,7 @@ export async function POST(request) {
     };
 
     // 1. 检查 Skill 是否已存在
-    const checkRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/skills/${skillName}`, { headers });
+    const checkRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/skillhub/data/workspace/${skillName}`, { headers });
     if (checkRes.ok) {
       return Response.json({ 
         success: false, 
@@ -111,7 +111,7 @@ export async function POST(request) {
     }
 
     // 5. 创建 Skill 目录和文件
-    const skillDir = `skills/${skillName}`;
+    const skillDir = `skillhub/data/workspace/${skillName}`;
     const fileContent = Buffer.from(skillContent).toString('base64');
 
     const fileRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${skillDir}/SKILL.md`, {
@@ -201,7 +201,7 @@ git checkout -b feat/add-${skillName.toLowerCase().replace(/[^a-z0-9]/g, '-')}
 \`\`\`
 
 ### 3. 添加文件
-在 \`skills/${skillName}/\` 目录下创建 \`SKILL.md\`，内容如下：
+在 \`skillhub/data/workspace/${skillName}/\` 目录下创建 \`SKILL.md\`，内容如下：
 
 \`\`\`markdown
 ${skillContent}

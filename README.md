@@ -30,10 +30,11 @@ node scripts/install.js
 
 ```text
 .
-├── agents/             # 代理类技能
-├── openclaw/           # OpenClaw 核心扩展技能
-├── workspace/          # 工作流与生产力技能
 ├── skillhub/           # Next.js Web 平台
+│   ├── data/
+│   │   ├── agents/     # 代理类技能
+│   │   ├── openclaw/   # OpenClaw 核心扩展技能
+│   │   └── workspace/  # 工作流与生产力技能
 │   ├── app/
 │   │   ├── api/        # 优化过的并行 API 层
 │   │   └── components/ # 模块化 React 组件
