@@ -5,10 +5,9 @@ const API_BASE = '/api';
 
 // 分类颜色映射
 const SOURCE_COLORS = {
-  local: { bg: '#48bb7820', color: '#48bb78', label: 'Local' },
+  workspace: { bg: '#48bb7820', color: '#48bb78', label: 'Local' },
   openclaw: { bg: '#ed893620', color: '#ed8936', label: 'OpenClaw' },
   clawhub: { bg: '#667eea20', color: '#667eea', label: 'ClawHub' },
-  pending: { bg: '#f6c90e20', color: '#f6c90e', label: 'Pending' },
   repo: { bg: '#38b2ac20', color: '#38b2ac', label: 'Repo' },
   github: { bg: '#48bb7820', color: '#48bb78', label: 'GitHub' },
   skillssh: { bg: '#f6c90e20', color: '#f6c90e', label: 'skill.sh' }
@@ -269,9 +268,8 @@ export default function Home() {
 
   const stats = [
     { key: 'all', label: '全部', color: '#667eea', count: skills.length },
-    { key: 'local', label: 'Local', color: '#48bb78', count: skills.filter(s => s.source === 'local').length },
-    { key: 'openclaw', label: 'OpenClaw', color: '#ed8936', count: skills.filter(s => s.source === 'openclaw').length },
-    { key: 'pending', label: 'Pending', color: '#f6c90e', count: skills.filter(s => s.source === 'pending').length }
+    { key: 'workspace', label: 'Local', color: '#48bb78', count: skills.filter(s => s.source === 'workspace').length },
+    { key: 'openclaw', label: 'OpenClaw', color: '#ed8936', count: skills.filter(s => s.source === 'openclaw').length }
   ];
 
   // 重试函数
@@ -376,9 +374,8 @@ export default function Home() {
             />
             <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '12px 16px', background: '#1a1a2e', border: '1px solid #2d2d4a', borderRadius: '8px', color: '#fff', fontSize: '14px' }}>
               <option value="all">全部来源</option>
-              <option value="local">Local ({skills.filter(s => s.source === 'local').length})</option>
+              <option value="workspace">Local ({skills.filter(s => s.source === 'workspace').length})</option>
               <option value="openclaw">OpenClaw ({skills.filter(s => s.source === 'openclaw').length})</option>
-              <option value="pending">Pending ({skills.filter(s => s.source === 'pending').length})</option>
             </select>
           </div>
 
@@ -443,16 +440,6 @@ export default function Home() {
                               </span>
                               <span style={{ fontSize: '12px', color: '#667eea', marginLeft: '4px' }}>↗</span>
                             </button>
-                            {skill.status === 'pending' && (
-                              <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '3px', background: '#f6c90e20', color: '#f6c90e' }}>
-                                待发布
-                              </span>
-                            )}
-                            {skill.status === 'builtin' && (
-                              <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '3px', background: '#48bb7820', color: '#48bb78' }}>
-                                内置
-                              </span>
-                            )}
                           </div>
                           <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', ...getSourceStyle(skill.source) }}>
                             {getSourceLabel(skill.source)}
@@ -828,11 +815,6 @@ export default function Home() {
                 <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', ...getSourceStyle(detailSkill.source) }}>
                   {getSourceLabel(detailSkill.source)}
                 </span>
-                {detailSkill.status === 'pending' && (
-                  <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', background: '#f6c90e20', color: '#f6c90e' }}>
-                    待发布
-                  </span>
-                )}
               </div>
               <p style={{ margin: 0, color: '#aaa', fontSize: '14px', lineHeight: '1.6' }}>
                 {detailSkill.desc || detailSkill.name}
@@ -890,25 +872,6 @@ export default function Home() {
             )}
             
             {/* Status Badge */}
-            {detailSkill.status && (
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {detailSkill.status === 'ready' && (
-                  <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', background: '#48bb7820', color: '#48bb78' }}>
-                    ✓ 可安装
-                  </span>
-                )}
-                {detailSkill.status === 'pending' && (
-                  <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', background: '#f6c90e20', color: '#f6c90e' }}>
-                    ⏳ 待发布
-                  </span>
-                )}
-                {detailSkill.status === 'builtin' && (
-                  <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', background: '#667eea20', color: '#667eea' }}>
-                    ⚡ 内置技能
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}
