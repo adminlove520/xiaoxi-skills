@@ -1,9 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Disable Turbopack for production build to increase stability
+  /* experimental: {
+    turbo: {
+      // ...
+    }
+  }, */
   outputFileTracingIncludes: {
-    '/api/**/*': ['../workspace/**/*', '../openclaw/**/*', '../agents/**/*'],
-  },
+    '/api/skills': [
+      '../workspace/**/*',
+      '../openclaw/**/*',
+      '../agents/**/*'
+    ]
+  }
 };
 
 module.exports = nextConfig;
