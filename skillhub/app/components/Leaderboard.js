@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import SkillCard from './SkillCard';
 import { LEADERBOARD_TABS } from './constants';
+import { useI18n } from '../i18n/I18nContext';
 
-// V2.2.2 - Fixed tab change bug and added robustness
 export default function Leaderboard({ onDetail, onCopy }) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('trending');
   const [data, setData] = useState({
     trending: [],
@@ -25,7 +26,6 @@ export default function Leaderboard({ onDetail, onCopy }) {
   });
 
   const fetchLeaderboard = async (tab) => {
-    // 确保 data 存在且含有该 tab
     if (data && data[tab] && data[tab].length > 0) return; 
 
     setLoading(prev => ({ ...prev, [tab]: true }));
@@ -37,7 +37,7 @@ export default function Leaderboard({ onDetail, onCopy }) {
       if (result.success) {
         setData(prev => ({ ...prev, [tab]: result.rankings || [] }));
       } else {
-        setError(prev => ({ ...prev, [tab]: result.error || '获取数据失败' }));
+        setError(prev => ({ ...prev, [tab]: result.error || t.leaderboard.error }));
       }
     } catch (e) {
       console.error('Fetch leaderboard failed:', e);
@@ -83,7 +83,7 @@ export default function Leaderboard({ onDetail, onCopy }) {
               transition: 'all 0.2s'
             }}
           >
-            {tabItem.label}
+            {t.leaderboard.tabs[tabItem.key]}
           </button>
         ))}
       </div>
@@ -91,7 +91,7 @@ export default function Leaderboard({ onDetail, onCopy }) {
       {currentLoading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
           <div className="spinner"></div>
-          正在获取最新排行...
+          {t.leaderboard.loading}
         </div>
       ) : currentError ? (
         <div style={{ 
@@ -102,7 +102,7 @@ export default function Leaderboard({ onDetail, onCopy }) {
           color: '#feb2b2',
           fontSize: '14px'
         }}>
-          ❌ 加载失败: {currentError}
+          ❌ {t.leaderboard.error}: {currentError}
         </div>
       ) : (
         <div style={{ 
@@ -136,7 +136,7 @@ export default function Leaderboard({ onDetail, onCopy }) {
           ))}
           {currentData.length === 0 && (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: '#666' }}>
-              暂无排行数据
+              {t.leaderboard.no_data}
             </div>
           )}
         </div>

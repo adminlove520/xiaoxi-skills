@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 
 const API_BASE = '/api';
 
 export default function SubmitPage() {
+  const { t } = useI18n();
   const [skillName, setSkillName] = useState('');
   const [skillDesc, setSkillDesc] = useState('');
   const [skillContent, setSkillContent] = useState('');
@@ -54,10 +56,10 @@ export default function SubmitPage() {
       if (data.success) {
         setRepos(data.repos);
       } else {
-        setError('无法加载仓库: ' + data.error);
+        setError(t.common.error + ': ' + data.error);
       }
     } catch (e) {
-      setError('网络错误: ' + e.message);
+      setError(t.common.error + ': ' + e.message);
     } finally {
       setLoadingRepos(false);
     }
@@ -75,44 +77,55 @@ export default function SubmitPage() {
         if (data.type === 'dir') {
           setRepoFiles(data.files);
         } else if (data.type === 'file') {
-          // It's a file, load it
           loadFileData(data.file);
         }
       } else {
-        setError('无法加载文件: ' + data.error);
+        setError(t.common.error + ': ' + data.error);
       }
     } catch (e) {
-      setError('网络错误: ' + e.message);
+      setError(t.common.error + ': ' + e.message);
     } finally {
       setLoadingFiles(false);
     }
   };
 
+  const extractFromMd = (content, field) => {
+    // 1. Try ## Header format
+    const headerRegex = new RegExp(`##\\s*${field}\\s*\\n\\s*([^\\n#]+)`, 'i');
+    const headerMatch = content.match(headerRegex);
+    if (headerMatch && headerMatch[1].trim()) return headerMatch[1].trim();
+
+    // 2. Try YAML-like format
+    const yamlRegex = new RegExp(`^${field}:\\s*([^\\n]+)`, 'im');
+    const yamlMatch = content.match(yamlRegex);
+    if (yamlMatch && yamlMatch[1].trim()) return yamlMatch[1].trim();
+
+    return '';
+  };
+
   const loadFileData = (file) => {
     try {
-      // Decode base64 UTF-8
       const content = decodeURIComponent(escape(atob(file.content.replace(/\s/g, ''))));
       setSkillContent(content);
       
-      // Auto-extract name and desc if possible
-      const nameMatch = content.match(/## name\s*\n\s*([^\n]+)/i) || content.match(/name:\s*([^\n]+)/i);
-      const descMatch = content.match(/## description\s*\n\s*([^\n]+)/i) || content.match(/description:\s*([^\n]+)/i);
+      const name = extractFromMd(content, 'name');
+      const desc = extractFromMd(content, 'description');
       
-      if (nameMatch) setSkillName(nameMatch[1].trim());
-      if (descMatch) setSkillDesc(descMatch[1].trim());
+      if (name) setSkillName(name);
+      if (desc) setSkillDesc(desc);
       
       setShowImport(false);
     } catch (e) {
-      setError('解码文件内容失败: ' + e.message);
+      setError(t.common.error + ': ' + e.message);
     }
   };
 
   const validateSkillMd = (content) => {
-    if (!content.includes('name') && !content.includes('## name')) {
-      return 'SKILL.md 应包含 skill name';
+    if (!extractFromMd(content, 'name')) {
+      return t.submit.validation.skill_md_invalid_name;
     }
-    if (!content.includes('description') && !content.includes('## description')) {
-      return 'SKILL.md 应包含 description';
+    if (!extractFromMd(content, 'description')) {
+      return t.submit.validation.skill_md_invalid_desc;
     }
     return null;
   };
@@ -122,9 +135,9 @@ export default function SubmitPage() {
     setError(null);
     setResult(null);
 
-    if (!skillName.trim()) { setError('请输入 Skill 名称'); return; }
-    if (!skillDesc.trim()) { setError('请输入 Skill 描述'); return; }
-    if (!skillContent.trim()) { setError('请输入 SKILL.md 内容'); return; }
+    if (!skillName.trim()) { setError(t.submit.validation.name_required); return; }
+    if (!skillDesc.trim()) { setError(t.submit.validation.desc_required); return; }
+    if (!skillContent.trim()) { setError(t.submit.validation.content_required); return; }
     
     const validationError = validateSkillMd(skillContent);
     if (validationError) { setError(validationError); return; }
@@ -151,10 +164,10 @@ export default function SubmitPage() {
           setSkillName(''); setSkillDesc(''); setSkillContent('');
         }
       } else {
-        setError(data.error || '提交失败');
+        setError(data.error || t.common.error);
       }
     } catch (e) {
-      setError('网络错误: ' + e.message);
+      setError(t.common.error + ': ' + e.message);
     } finally {
       setSubmitting(false);
     }
@@ -167,12 +180,12 @@ export default function SubmitPage() {
         {/* Header Section */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <div>
-            <h1 style={{ fontSize: '28px', margin: 0, fontWeight: '800', color: '#fff' }}>发布你的 Skill</h1>
-            <p style={{ color: '#888', marginTop: '4px', fontSize: '14px' }}>分享到 xiaoxi-skills 收藏库</p>
+            <h1 style={{ fontSize: '28px', margin: 0, fontWeight: '800', color: '#fff' }}>{t.submit.title}</h1>
+            <p style={{ color: '#888', marginTop: '4px', fontSize: '14px' }}>{t.submit.subtitle}</p>
           </div>
           {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#161625', padding: '6px 12px', borderRadius: '30px', border: '1px solid #2d2d4a' }}>
-              <img src={user.avatar_url} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+              <img src={user.avatar_url} style={{ width: '24px', height: '24px', borderRadius: '50%' }} alt={user.login} />
               <span style={{ fontSize: '13px', fontWeight: '500' }}>{user.login}</span>
             </div>
           )}
@@ -181,8 +194,8 @@ export default function SubmitPage() {
         {/* Action Bar */}
         {!user && !loadingUser && (
           <div style={{ background: '#161625', padding: '32px', borderRadius: '16px', border: '1px solid #ed893630', textAlign: 'center', marginBottom: '32px' }}>
-            <h3 style={{ margin: '0 0 12px', color: '#ed8936' }}>需要 GitHub 授权</h3>
-            <p style={{ color: '#888', marginBottom: '24px', fontSize: '14px' }}>登录后即可一键从你的 GitHub 仓库导入 SKILL.md，并自动提交 Pull Request。</p>
+            <h3 style={{ margin: '0 0 12px', color: '#ed8936' }}>{t.submit.auth_needed}</h3>
+            <p style={{ color: '#888', marginBottom: '24px', fontSize: '14px' }}>{t.submit.auth_desc}</p>
             <a 
               href="/api/auth/login?next=/submit" 
               style={{ 
@@ -199,7 +212,7 @@ export default function SubmitPage() {
               }}
             >
               <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.38-2.43-.98-2.43-.98-.29-.74-.71-.94-.71-.94-.73-.49.06-.48.06-.48.8.06 1.23.82 1.23.82.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-              立即登录
+              {t.submit.login_btn}
             </a>
           </div>
         )}
@@ -228,7 +241,7 @@ export default function SubmitPage() {
               onMouseOut={e => e.currentTarget.style.background = '#24292e'}
             >
               <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.38-2.43-.98-2.43-.98-.29-.74-.71-.94-.71-.94-.73-.49.06-.48.06-.48.8.06 1.23.82 1.23.82.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-              从 GitHub 仓库导入
+              {t.submit.import_btn}
             </button>
           </div>
         )}
@@ -238,16 +251,16 @@ export default function SubmitPage() {
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <div style={{ background: '#161625', width: '100%', maxWidth: '600px', borderRadius: '16px', border: '1px solid #2d2d4a', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
               <div style={{ padding: '20px', borderBottom: '1px solid #2d2d4a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>从 GitHub 导入 SKILL.md</h3>
+                <h3 style={{ margin: 0 }}>{t.submit.modal_title}</h3>
                 <button onClick={() => setShowImport(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '20px' }}>×</button>
               </div>
               
               <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
                 {loadingRepos || loadingFiles ? (
-                  <div style={{ textAlign: 'center', padding: '40px' }}>⏳ 加载中...</div>
+                  <div style={{ textAlign: 'center', padding: '40px' }}>⏳ {t.common.loading}</div>
                 ) : !selectedRepo ? (
                   <div>
-                    <p style={{ fontSize: '14px', color: '#888', marginBottom: '16px' }}>选择一个仓库：</p>
+                    <p style={{ fontSize: '14px', color: '#888', marginBottom: '16px' }}>{t.submit.select_repo}</p>
                     <div style={{ display: 'grid', gap: '8px' }}>
                       {repos.map(repo => (
                         <div key={repo.id} onClick={() => fetchFiles(repo.full_name)} style={{ padding: '12px 16px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '8px', cursor: 'pointer' }}>
@@ -260,19 +273,19 @@ export default function SubmitPage() {
                 ) : (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                      <button onClick={() => setSelectedRepo(null)} style={{ padding: '4px 8px', background: '#2d2d4a', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', fontSize: '12px' }}>← 返回仓库</button>
+                      <button onClick={() => setSelectedRepo(null)} style={{ padding: '4px 8px', background: '#2d2d4a', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', fontSize: '12px' }}>{t.submit.back_to_repos}</button>
                       <span style={{ fontSize: '13px', color: '#888' }}>/{currentPath}</span>
                     </div>
                     <div style={{ display: 'grid', gap: '4px' }}>
                       {currentPath && (
                         <div onClick={() => fetchFiles(selectedRepo, currentPath.split('/').slice(0, -1).join('/'))} style={{ padding: '10px 16px', color: '#667eea', cursor: 'pointer', fontSize: '14px' }}>
-                          📁 .. (上级目录)
+                          {t.submit.parent_dir}
                         </div>
                       )}
                       {repoFiles.map(file => (
                         <div key={file.path} onClick={() => fetchFiles(selectedRepo, file.path)} style={{ padding: '10px 16px', background: file.type === 'dir' ? '#1a1a2e' : '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ fontSize: '14px' }}>{file.type === 'dir' ? '📁' : '📄'} {file.name}</span>
-                          {file.name === 'SKILL.md' && <span style={{ fontSize: '10px', background: '#48bb78', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>推荐</span>}
+                          {file.name === 'SKILL.md' && <span style={{ fontSize: '10px', background: '#48bb78', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>{t.submit.recommended}</span>}
                         </div>
                       ))}
                     </div>
@@ -289,29 +302,29 @@ export default function SubmitPage() {
           {/* Left Column: Metadata */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ background: '#161625', padding: '24px', borderRadius: '12px', border: '1px solid #2d2d4a' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>基本信息</h3>
+              <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>{t.submit.basic_info}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>Skill 标识符 (必填)</label>
-                  <input value={skillName} onChange={e => setSkillName(e.target.value)} placeholder="如: my-tool" style={{ width: '100%', padding: '10px 12px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>{t.submit.skill_id}</label>
+                  <input value={skillName} onChange={e => setSkillName(e.target.value)} placeholder={t.submit.skill_id_placeholder} style={{ width: '100%', padding: '10px 12px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', color: '#fff', fontSize: '14px', outline: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>简短描述 (必填)</label>
-                  <input value={skillDesc} onChange={e => setSkillDesc(e.target.value)} placeholder="一句话介绍..." style={{ width: '100%', padding: '10px 12px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>{t.submit.short_desc}</label>
+                  <input value={skillDesc} onChange={e => setSkillDesc(e.target.value)} placeholder={t.submit.short_desc_placeholder} style={{ width: '100%', padding: '10px 12px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', color: '#fff', fontSize: '14px', outline: 'none' }} />
                 </div>
               </div>
             </div>
 
             <div style={{ background: '#161625', padding: '24px', borderRadius: '12px', border: '1px solid #2d2d4a' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>提交者信息</h3>
+              <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>{t.submit.submitter_info}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>GitHub 用户名</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>{t.submit.github_user}</label>
                   <input value={submitterName} onChange={e => setSubmitterName(e.target.value)} style={{ width: '100%', padding: '10px 12px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', color: '#fff', fontSize: '14px', outline: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>GitHub Token (可选)</label>
-                  <input type="password" value={githubToken} onChange={e => setGithubToken(e.target.value)} placeholder={user ? "已登录，此处可选" : "用于自动创建 PR"} style={{ width: '100%', padding: '10px 12px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                  <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '6px' }}>{t.submit.github_token}</label>
+                  <input type="password" value={githubToken} onChange={e => setGithubToken(e.target.value)} placeholder={user ? t.submit.token_placeholder_auth : t.submit.token_placeholder_noauth} style={{ width: '100%', padding: '10px 12px', background: '#0a0a0f', border: '1px solid #2d2d4a', borderRadius: '6px', color: '#fff', fontSize: '14px', outline: 'none' }} />
                 </div>
               </div>
             </div>
@@ -323,7 +336,7 @@ export default function SubmitPage() {
               disabled={submitting}
               style={{ padding: '16px', background: submitting ? '#333' : '#48bb78', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '16px', fontWeight: '700', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(72,187,120,0.2)' }}
             >
-              {submitting ? '提交中...' : '发布到 Hub'}
+              {submitting ? t.submit.publishing : t.submit.publish_btn}
             </button>
           </div>
 
@@ -331,13 +344,13 @@ export default function SubmitPage() {
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div style={{ background: '#161625', borderRadius: '12px', border: '1px solid #2d2d4a', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '500px' }}>
               <div style={{ padding: '12px 20px', borderBottom: '1px solid #2d2d4a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#888' }}>SKILL.md 编辑器</span>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#888' }}>{t.submit.editor_title}</span>
                 <span style={{ fontSize: '11px', color: '#555' }}>Markdown 支持</span>
               </div>
               <textarea
                 value={skillContent}
                 onChange={e => setSkillContent(e.target.value)}
-                placeholder={`# SKILL.md 示例\n\n## name\nmy-skill-id\n\n## description\n这个 Skill 的详细功能描述...`}
+                placeholder={t.submit.editor_placeholder}
                 style={{ flex: 1, width: '100%', padding: '20px', background: 'transparent', border: 'none', color: '#d1d1d1', fontSize: '13px', fontFamily: '"Fira Code", monospace', outline: 'none', resize: 'none', lineHeight: '1.6' }}
               />
             </div>
@@ -348,13 +361,13 @@ export default function SubmitPage() {
         {/* Results / Steps */}
         {result && (
           <div style={{ marginTop: '32px', background: '#161625', padding: '24px', borderRadius: '12px', border: `1px solid ${result.manual ? '#ed8936' : '#48bb78'}` }}>
-            <h3 style={{ margin: '0 0 12px', color: result.manual ? '#ed8936' : '#48bb78' }}>{result.manual ? '📝 请手动完成提交' : '✅ 提交成功！'}</h3>
+            <h3 style={{ margin: '0 0 12px', color: result.manual ? '#ed8936' : '#48bb78' }}>{result.manual ? t.submit.manual_title : t.submit.success_title}</h3>
             {result.manual ? (
               <pre style={{ background: '#0a0a0f', padding: '16px', borderRadius: '8px', overflowX: 'auto', fontSize: '12px', border: '1px solid #2d2d4a' }}>{result.guide}</pre>
             ) : (
               <div>
-                <p style={{ margin: '0 0 16px', color: '#aaa' }}>PR 已提交，等待审核。</p>
-                <a href={result.prUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#48bb78', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: '600' }}>查看 Pull Request</a>
+                <p style={{ margin: '0 0 16px', color: '#aaa' }}>{t.submit.pr_waiting}</p>
+                <a href={result.prUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#48bb78', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: '600' }}>{t.submit.view_pr}</a>
               </div>
             )}
           </div>
@@ -362,7 +375,7 @@ export default function SubmitPage() {
 
         {/* Footer */}
         <div style={{ textAlign: 'center', margin: '48px 0', fontSize: '14px' }}>
-          <a href="/" style={{ color: '#667eea', textDecoration: 'none' }}>← 返回主页</a>
+          <a href="/" style={{ color: '#667eea', textDecoration: 'none' }}>{t.submit.back_home}</a>
         </div>
 
       </div>

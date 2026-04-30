@@ -1,6 +1,8 @@
 import { SOURCE_COLORS } from './constants';
+import { useI18n } from '../i18n/I18nContext';
 
 export default function SkillCard({ skill, onDetail, onCopy }) {
+  const { t } = useI18n();
   const sourceStyle = SOURCE_COLORS[skill.source] || SOURCE_COLORS.repo;
   
   const renderStars = (stars) => {
@@ -91,7 +93,7 @@ export default function SkillCard({ skill, onDetail, onCopy }) {
             }}
             title={skill.install}
           >
-            📋 复制命令
+            📋 {t.skill_card.copy_btn}
           </button>
         ) : (
           <span style={{ 
@@ -101,7 +103,7 @@ export default function SkillCard({ skill, onDetail, onCopy }) {
             background: '#2d2d4a', 
             borderRadius: '4px' 
           }}>
-            内置技能
+            {t.skill_card.built_in}
           </span>
         )}
         {renderStars(skill.stars)}

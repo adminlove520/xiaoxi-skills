@@ -1,4 +1,7 @@
+import { useI18n } from '../i18n/I18nContext';
+
 export default function SkillDetailModal({ skill, onClose, onCopy }) {
+  const { t } = useI18n();
   if (!skill) return null;
 
   return (
@@ -55,13 +58,13 @@ export default function SkillDetailModal({ skill, onClose, onCopy }) {
         </div>
 
         <p style={{ color: '#aaa', lineHeight: '1.6', marginBottom: '32px', fontSize: '15px' }}>
-          {skill.desc || '该技能暂无详细描述。'}
+          {skill.desc || t.skill_card.no_desc}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {skill.install && (
             <div>
-              <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '8px' }}>安装命令</label>
+              <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '8px' }}>{t.skill_card.install_cmd}</label>
               <div style={{ 
                 display: 'flex', 
                 gap: '8px', 
@@ -76,7 +79,7 @@ export default function SkillDetailModal({ skill, onClose, onCopy }) {
                 <button 
                   onClick={() => onCopy(skill.install)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                  title="复制"
+                  title={t.skill_card.copy_btn}
                 >
                   📋
                 </button>
@@ -102,7 +105,7 @@ export default function SkillDetailModal({ skill, onClose, onCopy }) {
                   fontSize: '14px'
                 }}
               >
-                查看源代码
+                {t.skill_card.view_code}
               </a>
             )}
             {skill.repo && (
@@ -122,7 +125,7 @@ export default function SkillDetailModal({ skill, onClose, onCopy }) {
                   fontSize: '14px'
                 }}
               >
-                GitHub 仓库
+                GitHub Repo
               </a>
             )}
           </div>
