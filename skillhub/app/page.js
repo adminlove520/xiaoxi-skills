@@ -215,7 +215,7 @@ export default function Home() {
       {/* Footer */}
       <footer style={{ padding: '60px 40px', background: '#0a0a0f', borderTop: '1px solid #2d2d4a', textAlign: 'center' }}>
         <p style={{ color: '#555', fontSize: '14px' }}>© 2026 Xiaoxi Skills. Built for the OpenClaw Ecosystem.</p>
-      </header>
+      </footer>
     </div>
   );
 }
